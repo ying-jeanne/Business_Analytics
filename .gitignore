@@ -1,0 +1,10 @@
+**/venv/*
+**/__pycache__/*
+**/*.out
+**/*.log
+**/*.fdb_latexmk
+**/*.fls
+**/*.aux
+**/*.pdf
+**/*.synctex.gz
+**/CLAUDE.md
