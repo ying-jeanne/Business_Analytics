@@ -30,7 +30,8 @@ class PortfolioOptimizer:
             skiprows=15651,
             index_col=0,
             skip_blank_lines=False,  # Keep blank lines so we can detect them
-            nrows=31278 - 15651  # Read only the equal-weighted section
+            nrows=31278 - 15651,  # Read only the equal-weighted section
+            encoding='utf-8'
         )
         
         # Clean up data
@@ -104,55 +105,6 @@ class PortfolioOptimizer:
         ridge_cv.fit(X, y)
         
         return lasso_cv, ridge_cv
-    
-    def plot_lambda_selection(self, X, y):
-        """
-        Plot MSE vs -log(alpha) for lambda selection demonstration
-        Call this once to see how lambda selection works
-        """
-        tscv = TimeSeriesSplit(n_splits=5)
-        alphas = np.logspace(-8, 8, 101) 
-
-        # Fit models directly on original data (no standardization)
-        lasso_cv = LassoCV(alphas=alphas, cv=tscv, max_iter=2000)
-        ridge_cv = RidgeCV(alphas=alphas, cv=tscv)
-        lasso_cv.fit(X, y)
-        ridge_cv.fit(X, y)
-        
-        # Plot
-        plt.figure(figsize=(12, 5))
-        
-        # LASSO plot
-        plt.subplot(1, 2, 1)
-        mse_path = lasso_cv.mse_path_.mean(axis=1)
-        plt.plot(-np.log10(alphas), mse_path, 'b-', linewidth=2)
-        plt.axvline(-np.log10(lasso_cv.alpha_), color='r', linestyle='--', 
-                   label=f'Best α = {lasso_cv.alpha_:.2e}')
-        plt.xlabel('-log(α)')
-        plt.ylabel('Mean Squared Error')
-        plt.title('LASSO: MSE vs -log(α)')
-        plt.legend()
-        plt.grid(True, alpha=0.3)
-        
-        # Ridge plot
-        plt.subplot(1, 2, 2)
-        ridge_mse = []
-        for alpha in alphas:
-            ridge_scores = cross_val_score(Ridge(alpha=alpha), X, y, 
-                                         cv=tscv, scoring='neg_mean_squared_error')
-            ridge_mse.append(-ridge_scores.mean())
-        
-        plt.plot(-np.log10(alphas), ridge_mse, 'g-', linewidth=2)
-        plt.axvline(-np.log10(ridge_cv.alpha_), color='r', linestyle='--',
-                   label=f'Best α = {ridge_cv.alpha_:.2e}')
-        plt.xlabel('-log(α)')
-        plt.ylabel('Mean Squared Error')
-        plt.title('Ridge: MSE vs -log(α)')
-        plt.legend()
-        plt.grid(True, alpha=0.3)
-        
-        plt.tight_layout()
-        plt.show()
     
     def calculate_portfolio_weights(self, beta, w_EW, N):
         """
@@ -489,29 +441,46 @@ class PortfolioOptimizer:
         
         return results_df
     
-    def plot_cumulative_returns(self, window_size=126):
-        """Plot cumulative returns for all strategies"""
-        cumulative_returns = (1 + self.results/100).cumprod()
+    def plot_cumulative_returns(self, window_size=126, suffix="", title_suffix=""):
+        """Plot cumulative returns with customizable filename and title"""
+        # Handle different result structures (adaptive has extra columns)
+        if 'Adaptive' in self.results.columns:
+            numeric_cols = ['Adaptive', 'EW', 'LASSO', 'Ridge']
+            cumulative_returns = (1 + self.results[numeric_cols]/100).cumprod()
+        else:
+            cumulative_returns = (1 + self.results/100).cumprod()
         
         # Define distinct colors and line styles for each strategy
         style_config = {
+            'Adaptive': {'color': 'purple', 'linestyle': '-', 'linewidth': 3.0},
             'EW': {'color': 'blue', 'linestyle': '-', 'linewidth': 2.5},
             'MinVar': {'color': 'red', 'linestyle': '-', 'linewidth': 2.5},
             'LASSO': {'color': 'green', 'linestyle': '-', 'linewidth': 2.5},
             'Ridge': {'color': 'orange', 'linestyle': '-', 'linewidth': 2.5}
         }
         
+        # Adjust line styles for grouped/adaptive comparisons
+        if suffix in ["_grouped", "_adaptive"]:
+            for strategy in ['EW', 'LASSO', 'Ridge']:
+                if strategy in style_config:
+                    style_config[strategy]['linestyle'] = '--'
+        
         plt.figure(figsize=(14, 10), dpi=500)  # High resolution
         
         for strategy in cumulative_returns.columns:
             style = style_config.get(strategy, {'color': 'black', 'linestyle': '-', 'linewidth': 2})
+            label = f"{strategy} (Grouped)" if suffix == "_grouped" else strategy
             plt.plot(cumulative_returns.index, cumulative_returns[strategy], 
-                    label=strategy, 
+                    label=label, 
                     color=style['color'],
                     linestyle=style['linestyle'],
                     linewidth=style['linewidth'])
         
-        plt.title('Cumulative Returns: Portfolio Strategies Comparison', fontsize=16, fontweight='bold')
+        # Construct title
+        base_title = 'Cumulative Returns: Portfolio Strategies Comparison'
+        full_title = f'{base_title}{title_suffix}' if title_suffix else base_title
+        
+        plt.title(full_title, fontsize=16, fontweight='bold')
         plt.xlabel('Date', fontsize=14)
         plt.ylabel('Cumulative Return', fontsize=14)
         plt.legend(fontsize=12, loc='upper left')
@@ -519,8 +488,8 @@ class PortfolioOptimizer:
         plt.yscale('log')
         plt.tight_layout()
         
-        # Save in high resolution for report with window size in filename
-        filename = f'portfolio_cumulative_returns_{window_size}day.png'
+        # Save in high resolution for report
+        filename = f'portfolio_cumulative_returns_{window_size}day{suffix}.png'
         plt.savefig(filename, dpi=500, bbox_inches='tight')
         print(f"Plot saved as '{filename}'")
     
@@ -559,6 +528,265 @@ class PortfolioOptimizer:
         plt.savefig(filename, dpi=500, bbox_inches='tight')
         print(f"Plot saved as '{filename}'")
 
+    def calculate_market_volatility(self, returns_data, window_size=126):
+        """
+        Calculate market volatility using equal-weighted portfolio returns
+        Returns rolling volatility over specified window
+        """
+        market_returns = returns_data.mean(axis=1)  # Equal-weighted market portfolio
+        return market_returns.rolling(window=window_size).std()
+    
+    def determine_regime(self, market_volatility, lookback_days=252*5):
+        """
+        Determine market regime based on volatility threshold
+        High regime: σ_mkt,t > μ_σ + 0.5*σ_σ
+        Low regime: σ_mkt,t ≤ μ_σ + 0.5*σ_σ
+        """
+        # Calculate historical statistics using expanding window up to lookback_days
+        regimes = []
+        
+        for i in range(len(market_volatility)):
+            # Use expanding window for regime calculation, but cap at lookback_days
+            # CRITICAL: Only use data up to i-1 to avoid look-ahead bias
+            start_idx = max(0, i - lookback_days)
+            historical_vol = market_volatility.iloc[start_idx:i]  # Exclude current day i
+            
+            if len(historical_vol) < 252:  # Need at least 1 year of data
+                regimes.append('Low')  # Default to low regime for early periods
+                continue
+            
+            # Calculate historical statistics using only past data
+            mu_sigma = historical_vol.mean()
+            sigma_sigma = historical_vol.std()
+            threshold = mu_sigma + 0.5 * sigma_sigma
+            
+            # Current volatility (the one we're classifying)
+            current_vol = market_volatility.iloc[i]
+            
+            # Determine regime
+            if current_vol > threshold:
+                regimes.append('High')
+            else:
+                regimes.append('Low')
+        
+        return regimes
+    
+    def rolling_window_backtest_adaptive(self, window_size=126):
+        """
+        Perform rolling window backtesting with regime-adaptive strategy selection
+        High volatility → LASSO, Low volatility → Equal Weight
+        """
+        print(f"Starting regime-adaptive backtesting with {window_size}-day windows...")
+        print("Strategy Selection Logic:")
+        print("- High Volatility Regime → LASSO (feature selection filters unreliable assets)")
+        print("- Low Volatility Regime → Equal Weight (robust performance in stable environments)")
+        print("-" * 60)
+        
+        # Calculate market volatility for the entire dataset
+        market_volatility = self.calculate_market_volatility(self.returns, window_size)
+        
+        # Determine regimes for the entire dataset
+        regimes = self.determine_regime(market_volatility)
+        
+        # Initialize results storage
+        dates = []
+        adaptive_returns = []
+        strategy_used = []
+        regime_classification = []
+        
+        # Also track static strategies for comparison
+        ew_returns = []
+        lasso_returns = []
+
+        
+        # Rolling window loop
+        total_days = len(self.returns) - window_size
+        regime_switches = 0
+        last_strategy = None
+        
+        for i in range(window_size, len(self.returns)):
+            # Simple progress logging every 500 days
+            if (i - window_size) % 500 == 0:
+                current_day = i - window_size + 1
+                print(f"Processing day {current_day}/{total_days} ({current_day/total_days*100:.1f}%)")
+            
+            # Training window
+            train_data = self.returns.iloc[i-window_size:i]
+            
+            # Next day (out-of-sample)
+            test_date = self.returns.index[i]
+            test_returns = self.returns.iloc[i]
+            
+            # Determine current regime
+            current_regime = regimes[i]
+            
+            # Select strategy based on regime
+            if current_regime == 'High':
+                current_strategy = 'LASSO'
+            else:
+                current_strategy = 'EW'
+            
+            # Track regime switches
+            if last_strategy is not None and last_strategy != current_strategy:
+                regime_switches += 1
+            last_strategy = current_strategy
+            
+            # Calculate returns for all strategies (for comparison)
+            # Equal-weighted
+            ew_weights = np.ones(len(test_returns)) / len(test_returns)
+            ew_return = np.sum(ew_weights * test_returns)
+            
+            # LASSO and Ridge (calculate both even if not used)
+            X, y, w_EW, N = self.transform_to_regression(train_data)
+            lasso_model, _ = self.fit_regularized_models(X, y)
+            
+            lasso_beta = lasso_model.coef_
+            lasso_weights = self.calculate_portfolio_weights(lasso_beta, w_EW, N)
+            lasso_return = np.sum(lasso_weights * test_returns)
+            
+            # Select adaptive return based on regime
+            if current_strategy == 'LASSO':
+                adaptive_return = lasso_return
+            else:
+                adaptive_return = ew_return
+            
+            # Store results
+            dates.append(test_date)
+            adaptive_returns.append(adaptive_return)
+            strategy_used.append(current_strategy)
+            regime_classification.append(current_regime)
+            
+            # Store static strategy results for comparison
+            ew_returns.append(ew_return)
+            lasso_returns.append(lasso_return)
+        
+        # Create results DataFrame
+        self.results = pd.DataFrame({
+            'Date': dates,
+            'Adaptive': adaptive_returns,
+            'EW': ew_returns,
+            'LASSO': lasso_returns,
+            'Strategy': strategy_used,
+            'Regime': regime_classification
+        })
+        self.results.set_index('Date', inplace=True)
+        
+        # Calculate regime statistics
+        total_days = len(self.results)
+        high_vol_days = sum([1 for r in regime_classification if r == 'High'])
+        low_vol_days = total_days - high_vol_days
+        lasso_days = sum([1 for s in strategy_used if s == 'LASSO'])
+        ew_days = total_days - lasso_days
+        
+        print(f"Regime-adaptive backtesting completed: {total_days} out-of-sample days")
+        print(f"Regime Statistics:")
+        print(f"  High Volatility: {high_vol_days} days ({high_vol_days/total_days*100:.1f}%)")
+        print(f"  Low Volatility: {low_vol_days} days ({low_vol_days/total_days*100:.1f}%)")
+        print(f"Strategy Usage:")
+        print(f"  LASSO: {lasso_days} days ({lasso_days/total_days*100:.1f}%)")
+        print(f"  Equal Weight: {ew_days} days ({ew_days/total_days*100:.1f}%)")
+        print(f"  Regime Switches: {regime_switches}")
+    
+    def calculate_adaptive_performance_metrics(self):
+        """Calculate performance metrics for regime-adaptive strategy and comparisons"""
+        if self.results is None or len(self.results) == 0:
+            print("No results to analyze. Run backtesting first.")
+            return
+        
+        print("\n" + "="*60)
+        print("REGIME-ADAPTIVE PORTFOLIO PERFORMANCE ANALYSIS")
+        print("="*60)
+        
+        # Filter to Validation 2 period (2025-01-02 to 2025-06-30)
+        val2_start = '2025-01-02'
+        val2_end = '2025-06-30'
+        
+        val2_results = self.results[val2_start:val2_end]
+        print(f"Validation 2 period: {val2_start} to {val2_end}")
+        print(f"Number of trading days in validation period: {len(val2_results)}")
+        
+        metrics = {}
+        
+        # Calculate metrics for all strategies including adaptive
+        for strategy in ['Adaptive', 'EW', 'LASSO', 'Ridge']:
+            returns = val2_results[strategy]
+            
+            # Calculate metrics
+            mean_return = returns.mean()
+            std_return = returns.std()
+            sharpe_ratio = mean_return / std_return if std_return > 0 else 0
+            
+            # Calculate annualized return and max drawdown
+            cumulative = (1 + returns/100).cumprod()
+            ann_return = (cumulative.iloc[-1] ** (252/len(returns)) - 1) * 100
+            running_max = cumulative.expanding().max()
+            drawdown = (cumulative - running_max) / running_max
+            max_drawdown = drawdown.min() * 100
+            
+            metrics[strategy] = {
+                'Daily Mean Return (%)': mean_return * 100,
+                'Daily Volatility (%)': std_return * 100,
+                'Sharpe Ratio': sharpe_ratio,
+                'Ann. Return (%)': ann_return,
+                'Max Drawdown (%)': max_drawdown
+            }
+        
+        # Display results
+        results_df = pd.DataFrame(metrics).T
+        print(results_df.round(4))
+        
+        # Best strategy by Sharpe ratio
+        best_strategy = results_df['Sharpe Ratio'].idxmax()
+        print(f"\nBest Strategy by Sharpe Ratio (Validation 2): {best_strategy}")
+        
+        # Regime-specific analysis for validation period
+        val2_regimes = val2_results['Regime'].value_counts()
+        val2_strategies = val2_results['Strategy'].value_counts()
+        print(f"\nValidation Period Regime Analysis:")
+        print(f"High Volatility: {val2_regimes.get('High', 0)} days ({val2_regimes.get('High', 0)/len(val2_results)*100:.1f}%)")
+        print(f"Low Volatility: {val2_regimes.get('Low', 0)} days ({val2_regimes.get('Low', 0)/len(val2_results)*100:.1f}%)")
+        print(f"LASSO used: {val2_strategies.get('LASSO', 0)} days ({val2_strategies.get('LASSO', 0)/len(val2_results)*100:.1f}%)")
+        print(f"EW used: {val2_strategies.get('EW', 0)} days ({val2_strategies.get('EW', 0)/len(val2_results)*100:.1f}%)")
+        
+        return results_df
+    
+    def plot_cumulative_returns_adaptive(self, window_size=126):
+        """Plot cumulative returns for adaptive strategy vs static strategies"""
+        # Use only the numeric columns for cumulative returns
+        numeric_cols = ['Adaptive', 'EW', 'LASSO', 'Ridge']
+        cumulative_returns = (1 + self.results[numeric_cols]/100).cumprod()
+        
+        # Define distinct colors and line styles for each strategy
+        style_config = {
+            'Adaptive': {'color': 'purple', 'linestyle': '-', 'linewidth': 3.0},
+            'EW': {'color': 'blue', 'linestyle': '--', 'linewidth': 2.5},
+            'LASSO': {'color': 'green', 'linestyle': '--', 'linewidth': 2.5},
+            'Ridge': {'color': 'orange', 'linestyle': '--', 'linewidth': 2.5}
+        }
+        
+        plt.figure(figsize=(14, 10), dpi=500)  # High resolution
+        
+        for strategy in cumulative_returns.columns:
+            style = style_config.get(strategy, {'color': 'black', 'linestyle': '-', 'linewidth': 2})
+            plt.plot(cumulative_returns.index, cumulative_returns[strategy], 
+                    label=strategy, 
+                    color=style['color'],
+                    linestyle=style['linestyle'],
+                    linewidth=style['linewidth'])
+        
+        plt.title('Cumulative Returns: Regime-Adaptive vs Static Strategies', fontsize=16, fontweight='bold')
+        plt.xlabel('Date', fontsize=14)
+        plt.ylabel('Cumulative Return', fontsize=14)
+        plt.legend(fontsize=12, loc='upper left')
+        plt.grid(True, alpha=0.3)
+        plt.yscale('log')
+        plt.tight_layout()
+        
+        # Save in high resolution for report
+        filename = f'portfolio_cumulative_returns_{window_size}day_adaptive.png'
+        plt.savefig(filename, dpi=500, bbox_inches='tight')
+        print(f"Plot saved as '{filename}'")
+    
     def run_future_analysis(self, window_size=126):
         """
         Portfolio grouping analysis implementation (Mode 3)
@@ -587,6 +815,34 @@ class PortfolioOptimizer:
         
         return performance_metrics
     
+    def run_adaptive_analysis(self, window_size=126):
+        """
+        Regime-adaptive portfolio optimization implementation (Mode 4)
+        Switches between LASSO and Equal Weight based on market volatility regimes
+        """
+        print("PORTFOLIO OPTIMIZATION WITH REGIME-ADAPTIVE STRATEGY SELECTION")
+        print("="*60)
+        print("Dynamic Constraints Implementation:")
+        print("- Market volatility calculation using rolling 126-day equal-weighted returns")
+        print("- Regime detection: High volatility → LASSO, Low volatility → Equal Weight")
+        print("- Threshold: σ_mkt,t > μ_σ + 0.5*σ_σ")
+        print("- Similar to decision tree + leaves being different strategies")
+        print("-" * 60)
+        
+        # Load data (same as other analyses)
+        self.load_data()
+        
+        # Run adaptive backtesting
+        self.rolling_window_backtest_adaptive(window_size)
+        
+        # Calculate and display performance metrics (adapted for regime analysis)
+        performance_metrics = self.calculate_adaptive_performance_metrics()
+        
+        # Plot cumulative returns with adaptive strategy
+        self.plot_cumulative_returns_adaptive(window_size)
+        
+        return performance_metrics
+    
     def run_full_analysis(self, window_size=126):
         """Run complete portfolio optimization analysis"""
         print("PORTFOLIO OPTIMIZATION WITH LASSO AND RIDGE REGRESSION")
@@ -610,8 +866,8 @@ def main():
     
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='Portfolio Optimization Analysis')
-    parser.add_argument('--mode', type=int, choices=[1, 2, 3], default=1,
-                       help='Analysis mode: 1=126-day window, 2=252-day window, 3=future implementation')
+    parser.add_argument('--mode', type=int, choices=[1, 2, 3, 4], default=1,
+                       help='Analysis mode: 1=126-day window, 2=252-day window, 3=grouped portfolios, 4=regime-adaptive')
     args = parser.parse_args()
     
     # Map mode to configuration
@@ -623,6 +879,8 @@ def main():
         mode_name = "252-day window"
     elif args.mode == 3:
         mode_name = "126-day with 9-portfolios grouping"
+    elif args.mode == 4:
+        mode_name = "126-day with regime-adaptive strategy selection"
     
     print("Starting Portfolio Optimization Analysis...")
     print(f"Selected Mode {args.mode}: {mode_name}")
@@ -641,6 +899,8 @@ def main():
     try:
         if args.mode == 3:
             results = optimizer.run_future_analysis(window_size=window_size)
+        elif args.mode == 4:
+            results = optimizer.run_adaptive_analysis(window_size=window_size)
         else:
             results = optimizer.run_full_analysis(window_size=window_size)
         
