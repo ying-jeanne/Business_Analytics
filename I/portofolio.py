@@ -209,38 +209,6 @@ class PortfolioOptimizer:
         # Default fallback
         return ("Unknown", "Unknown")
     
-    def create_portfolio_groups(self, returns_data):
-        """
-        Group 100 portfolios into 9 logical categories (3x3 matrix)
-        Returns DataFrame with 9 columns representing grouped portfolios
-        """
-        # Initialize group collections
-        groups = {}
-        for size in ["Small", "Medium", "Large"]:
-            for prof in ["Low", "Medium", "High"]:
-                groups[f"{size}_{prof}"] = []
-        
-        # Map each portfolio to its group
-        for col in returns_data.columns:
-            size_group, prof_group = self.map_column_to_group(col)
-            if size_group != "Unknown" and prof_group != "Unknown":
-                group_name = f"{size_group}_{prof_group}"
-                groups[group_name].append(col)
-        
-        # Create grouped return series by equal-weighting within each group
-        grouped_returns = pd.DataFrame(index=returns_data.index)
-        
-        for group_name, portfolio_list in groups.items():
-            if portfolio_list:  # Only create group if it has portfolios
-                grouped_returns[group_name] = returns_data[portfolio_list].mean(axis=1)
-        
-        print(f"Created {len(grouped_returns.columns)} portfolio groups:")
-        for group_name, portfolio_list in groups.items():
-            if portfolio_list:
-                print(f"  {group_name}: {len(portfolio_list)} portfolios")
-        
-        return grouped_returns
-    
     def create_portfolio_mapping(self):
         """
         Create one-time mapping of portfolios to groups for efficient reuse
@@ -273,11 +241,18 @@ class PortfolioOptimizer:
         """
         grouped_returns = pd.DataFrame(index=returns_data.index)
         
-        for group_name, portfolio_list in portfolio_mapping.items():
-            # Only include portfolios that exist in current returns_data
-            available_portfolios = [p for p in portfolio_list if p in returns_data.columns]
-            if available_portfolios:
-                grouped_returns[group_name] = returns_data[available_portfolios].mean(axis=1)
+        # Ensure deterministic column order by using the same hardcoded order
+        # This matches the order used in create_portfolio_mapping()
+        group_order = [f"{size}_{prof}" for size in ["Small", "Medium", "Large"] 
+                      for prof in ["Low", "Medium", "High"]]
+        
+        for group_name in group_order:
+            if group_name in portfolio_mapping:
+                portfolio_list = portfolio_mapping[group_name]
+                # Only include portfolios that exist in current returns_data
+                available_portfolios = [p for p in portfolio_list if p in returns_data.columns]
+                if available_portfolios:
+                    grouped_returns[group_name] = returns_data[available_portfolios].mean(axis=1)
         
         return grouped_returns
     
@@ -299,9 +274,9 @@ class PortfolioOptimizer:
                     group_portfolios[group_name] = []
                 group_portfolios[group_name].append(i)
         
-        # Distribute weights
-        group_names = [f"{size}_{prof}" for size in ["Small", "Medium", "Large"] 
-                      for prof in ["Low", "Medium", "High"]]
+        # CRITICAL FIX: Use the same column order as self.grouped_data
+        # This ensures consistency between optimization and weight distribution
+        group_names = list(self.grouped_data.columns)
         
         for j, group_name in enumerate(group_names):
             if j < len(group_weights) and group_name in group_portfolios:

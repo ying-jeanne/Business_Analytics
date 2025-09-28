@@ -62,7 +62,7 @@
     \vspace{0.5cm}
     Submission Date: \today \\
     \vspace{0.3cm}
-    \href{https://github.com/ying-jeanne/fundation_ba}{Link to code repository}
+    \href{https://github.com/ying-jeanne/Business_Analytics}{Link to code repository}
     }
     \vfill
 \end{titlepage}
@@ -71,16 +71,18 @@
 
 \section{Executive Summary}
 
-This report presents a comprehensive analysis of portfolio optimization using regularized linear regression techniques. We transform the traditional minimizing risks portfolio optimization problem into a linear regression framework and apply LASSO and Ridge regularization to address overfitting issues inherent in minimum variance portfolios.
+This report presents a comprehensive analysis of portfolio optimization using regularized linear regression techniques to address overfitting issues inherent in minimum variance portfolios. We transform the traditional minimizing risks portfolio optimization problem into a linear regression framework and apply LASSO and Ridge regularization, with additional data transformation improvements for enhanced performance.
 
-Using daily returns data from 100 portfolios formed on Market Equity (ME) and Operating Profitability (OP) from 1963 to 2025, we implement a rolling window backtesting framework to evaluate portfolio performance. Our analysis demonstrates that regularization techniques can significantly improve out-of-sample portfolio performance compared to traditional minimum variance approaches.
+Using daily returns data from 100 portfolios formed on Market Equity (ME) and Operating Profitability (OP) from 1963 to 2025, we implement multiple approaches: baseline 126-day windows, extended 252-day windows, and 9-portfolio grouping (3×3 ME/OP matrix). Our analysis demonstrates that data transformation techniques significantly improve performance beyond regularization alone.
 
 \textbf{Key Findings:}
 \begin{itemize}
     \item LASSO regression provides sparse portfolio solutions with feature selection
     \item Ridge regression offers effective shrinkage to reduce parameter estimation noise
-    \item Both regularization methods outperform the minimum variance portfolio in terms of Sharpe ratio
-    \item The equal-weighted portfolio serves as a strong benchmark, highlighting the challenges of sophisticated optimization techniques
+    \item Extended 252-day windows improve all strategies through more data points
+    \item Portfolio grouping (100→9) dramatically improves performance: LASSO (0.0710 Sharpe), Ridge (0.0660 Sharpe)
+    \item Data transformation addresses overfitting more effectively than regularization alone
+    \item Equal-weighted remains a robust benchmark across all approaches
 \end{itemize}
 
 \section{Introduction and Data}
@@ -103,6 +105,11 @@ We use the "100 Portfolios ME/OP 10x10" dataset from CRSP (202507), specifically
 \subsection{Portfolio Performance Comparison}
 The performance analysis focuses on the validation period (January 2 to June 30, 2025) containing 122 trading days to provide unbiased out-of-sample evaluation. Our analysis reveals significant performance differences across portfolio strategies, with regularization techniques demonstrating superior risk-adjusted returns.
 
+\textbf{Reproduction:}
+To reproduce the baseline portfolio performance results presented in Table \ref{tab:performance}, run:
+\begin{lstlisting}
+python portfolio.py --mode 1
+\end{lstlisting}
 
 \begin{table}[H]
 \centering
@@ -161,6 +168,12 @@ Standard 126-day windows provide only 1.26 observations per feature for our 100-
     \item Improved signal-to-noise ratio for all portfolio strategies
 \end{itemize}
 
+\textbf{Reproduction:}
+To reproduce the 252-day window analysis results presented in Table \ref{tab:window_comparison}, run:
+\begin{lstlisting}
+python portfolio.py --mode 2
+\end{lstlisting}
+
 \textbf{Performance Comparison:}
 Table \ref{tab:window_comparison} compares portfolio performance across different window sizes. The results validate our theoretical hypothesis: larger windows dramatically improve all portfolio strategies except for the EW strategy, with MinVar recovering from negative (-17.88\%) to positive (4.99\%) returns.
 
@@ -206,6 +219,12 @@ We create a 3×3 matrix combining size and profitability dimensions. Size groups
     \item Reduces overfitting through logical dimensionality reduction
 \end{itemize}
 
+\textbf{Reproduction:}
+To reproduce the portfolio grouping analysis results presented in Table \ref{tab:grouping_comparison}, run:
+\begin{lstlisting}
+python portfolio.py --mode 3
+\end{lstlisting}
+
 \textbf{Performance Comparison:}
 Table \ref{tab:grouping_comparison} compares individual versus grouped portfolio optimization.
 
@@ -217,33 +236,30 @@ Table \ref{tab:grouping_comparison} compares individual versus grouped portfolio
 \hline
 Strategy & Approach & Daily Return (\%) & Daily Vol (\%) & Sharpe Ratio \\
 \hline
-EW & Individual & [TBD] & [TBD] & [TBD] \\
-EW & Grouped & [TBD] & [TBD] & [TBD] \\
-MinVar & Individual & [TBD] & [TBD] & [TBD] \\
-MinVar & Grouped & [TBD] & [TBD] & [TBD] \\
-LASSO & Individual & [TBD] & [TBD] & [TBD] \\
-LASSO & Grouped & [TBD] & [TBD] & [TBD] \\
-Ridge & Individual & [TBD] & [TBD] & [TBD] \\
-Ridge & Grouped & [TBD] & [TBD] & [TBD] \\
+EW & Individual & 2.70 & 163.65 & 0.0165 \\
+EW & Grouped & 2.70 & 163.65 & 0.0165 \\
+MinVar & Individual & -17.88 & 135.80 & -0.1317 \\
+MinVar & Grouped & 8.67 & 118.04 & 0.0735 \\
+LASSO & Individual & 4.30 & 97.44 & 0.0442 \\
+LASSO & Grouped & 8.46 & 119.13 & 0.0710 \\
+Ridge & Individual & 4.12 & 94.61 & 0.0436 \\
+Ridge & Grouped & 7.71 & 116.88 & 0.0660 \\
 \hline
 \end{tabular}
 \end{table}
 
-\subsection{Beyond L2 Loss Functions: Risk-Aware Optimization}
+\textbf{Key Findings from Portfolio Grouping Analysis:}
 
-\textbf{Challenge:} The linear regression transformation inherently assumes L2 loss ($\min ||y - X\beta||_2^2$), but this may not reflect realistic portfolio risk preferences or financial return characteristics.
+The empirical results strongly validate our theoretical hypothesis about reducing overfitting through improved observations-per-feature ratios. The portfolio grouping approach demonstrates several critical insights:
 
-\subsubsection{Quantile Regression for Asymmetric Risk}
-\textbf{Downside Protection Portfolio:}
-\begin{align}
-\min_\beta \sum_{i=1}^T \rho_{0.1}(y_i - x_i^T\beta) + \lambda ||\beta||_1
-\end{align}
-where $\rho_\tau(u) = u(\tau - \mathbb{I}(u < 0))$ enables:
 \begin{itemize}
-    \item \textbf{Bear Market Focus:} $\tau = 0.1$ optimizes for 10th percentile outcomes
-    \item \textbf{Asymmetric Cost:} Penalizes underestimating downside more than overestimating
-    \item \textbf{Crisis Resilience:} Better performance during market stress periods
+    \item \textbf{MinVar Overfitting Resolution:} MinVar recovers from negative returns (-17.88\%) to positive (8.67\%), with Sharpe ratio improving from -0.1317 to 0.0735
+    \item \textbf{EW Unchanged:} Equal-weighted remains identical (0.0165 Sharpe) as expected
+    \item \textbf{Regularization Improvement:} LASSO (0.0442 to 0.0710) and Ridge (0.0436 to 0.0660) both show higher Sharpe ratios
+    \item \textbf{Statistical Validation:} 14.0 vs 1.26 observations per feature successfully addresses overfitting
 \end{itemize}
+
+The results demonstrate that portfolio grouping effectively balances the bias-variance tradeoff by reducing estimation error at the cost of some model complexity, making it particularly valuable for traditional optimization approaches that lack inherent regularization mechanisms.
 
 \subsection{Dynamic Constraints for Regime-Adaptive Portfolios}
 
@@ -258,7 +274,7 @@ Strategy_t = \begin{cases}
 \text{Equal Weight} & \text{if } \hat{\sigma}_{mkt,t} \leq \mu_{\sigma} + 0.5\sigma_{\sigma}
 \end{cases}
 \end{align}
-where $\hat{\sigma}_{mkt,t}$ is rolling 126-day market volatility, $\mu_{\sigma}$ is historical average volatility, and $\sigma_{\sigma}$ is volatility of volatility.
+where $\hat{\sigma}_{mkt,t}$ is rolling 126-day market volatility, $\mu_{\sigma}$ is historical average volatility, and $\sigma_{\sigma}$ is volatility of volatility. This idea is similar to the mix decision tree + leaves being linear regression. depends on the regime, use different strategy.
 
 \subsubsection{Performance Comparison}
 Table \ref{tab:regime_performance} compares regime-adaptive constraints against static implementations across different market periods.
@@ -281,10 +297,10 @@ Regime-Adaptive & [TBD] & [TBD] & [TBD] \\
 
 \section{Conclusion}
 
-This study demonstrates that regularization techniques effectively address the bias-variance tradeoff in portfolio optimization. While minimum variance portfolios suffer from overfitting with extreme weights, LASSO and Ridge provide superior out-of-sample performance through automatic feature selection and coefficient shrinkage respectively.
+This study demonstrates that regularization techniques and data transformation effectively address the bias-variance tradeoff in portfolio optimization. While minimum variance portfolios suffer from overfitting with extreme weights, LASSO and Ridge regularization combined with extended windows and portfolio grouping provide superior out-of-sample performance.
 
-In finance's low signal-to-noise environment (2\% $R^2$ benchmark), LASSO achieves the best risk-adjusted performance (Sharpe 0.0442) through sparsity, while Ridge provides close performance (Sharpe 0.0436) with lowest volatility. Both methods significantly outperform traditional approaches by managing estimation error effectively.
+In finance's low signal-to-noise environment (2\% $R^2$ benchmark), data transformation techniques achieve the best results: portfolio grouping delivers LASSO (0.0710 Sharpe) and Ridge (0.0660 Sharpe), significantly outperforming baseline approaches. Extended 252-day windows and 9-portfolio grouping address overfitting more effectively than regularization alone.
 
-\textbf{Key Takeaway:} Simpler, regularized approaches outperform theoretically optimal but overfitted solutions. In finance, where signal-to-noise ratios are inherently low, the focus should shift from maximizing predictive accuracy to building robust models that perform consistently out-of-sample. This demonstrates a classic engineering principle - optimal solutions in practice often require thoughtful tradeoffs rather than theoretical perfection.
+\textbf{Key Takeaway:} Data transformation combined with regularization outperforms theoretical optimization alone. In finance, where signal-to-noise ratios are inherently low, the focus should shift from complex models to robust approaches with better statistical foundations. This demonstrates a classic engineering principle - optimal solutions require thoughtful data preparation and statistical considerations rather than algorithmic sophistication alone. On top of that, trade offs are quite often more important than the absolute performance.
 
 \end{document}

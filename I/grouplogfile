@@ -18,16 +18,6 @@ Portfolio Grouping Implementation:
 Loading average equal weighted portfolio returns data...
 Data loaded: 15625 days, 100 portfolios
 Date range: 1963-07-01 00:00:00 to 2025-07-31 00:00:00
-Created 9 portfolio groups:
-  Small_Low: 9 portfolios
-  Small_Medium: 12 portfolios
-  Small_High: 9 portfolios
-  Medium_Low: 12 portfolios
-  Medium_Medium: 16 portfolios
-  Medium_High: 12 portfolios
-  Large_Low: 9 portfolios
-  Large_Medium: 12 portfolios
-  Large_High: 9 portfolios
 Starting grouped rolling window backtesting with 126-day windows...
 Using portfolio grouping: 100 portfolios → 9 groups
 Portfolio mapping created: 9 groups
