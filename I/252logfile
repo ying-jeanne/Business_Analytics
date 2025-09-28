@@ -1,0 +1,78 @@
+Starting Portfolio Optimization Analysis...
+This implementation follows:
+- Rolling window backtesting (126-day windows)
+- Linear regression transformation (w = w_EW - Nβ)
+- LASSO and Ridge regularization with cross-validation
+- Performance evaluation using Sharpe ratio
+- Comparison of EW, MinVar, LASSO, and Ridge portfolios
+------------------------------------------------------------
+PORTFOLIO OPTIMIZATION WITH LASSO AND RIDGE REGRESSION
+============================================================
+Loading average equal weighted portfolio returns data...
+Data loaded: 15625 days, 100 portfolios
+Date range: 1963-07-01 00:00:00 to 2025-07-31 00:00:00
+Starting rolling window backtesting with 252-day windows...
+Processing day 1/15373 (0.0%)
+Processing day 501/15373 (3.3%)
+Processing day 1001/15373 (6.5%)
+Processing day 1501/15373 (9.8%)
+Processing day 2001/15373 (13.0%)
+Processing day 2501/15373 (16.3%)
+Processing day 3001/15373 (19.5%)
+Processing day 3501/15373 (22.8%)
+Processing day 4001/15373 (26.0%)
+Processing day 4501/15373 (29.3%)
+Processing day 5001/15373 (32.5%)
+Processing day 5501/15373 (35.8%)
+Processing day 6001/15373 (39.0%)
+Processing day 6501/15373 (42.3%)
+Processing day 7001/15373 (45.5%)
+Processing day 7501/15373 (48.8%)
+Processing day 8001/15373 (52.0%)
+Processing day 8501/15373 (55.3%)
+Processing day 9001/15373 (58.6%)
+Processing day 9501/15373 (61.8%)
+Processing day 10001/15373 (65.1%)
+Processing day 10501/15373 (68.3%)
+Processing day 11001/15373 (71.6%)
+Processing day 11501/15373 (74.8%)
+Processing day 12001/15373 (78.1%)
+Processing day 12501/15373 (81.3%)
+Processing day 13001/15373 (84.6%)
+Processing day 13501/15373 (87.8%)
+Processing day 14001/15373 (91.1%)
+Processing day 14501/15373 (94.3%)
+Processing day 15001/15373 (97.6%)
+Backtesting completed: 15373 out-of-sample days
+
+============================================================
+PORTFOLIO PERFORMANCE ANALYSIS
+============================================================
+Validation 2 period: 2025-01-02 to 2025-06-30
+Number of trading days in validation period: 122
+        Daily Mean Return (%)  Daily Volatility (%)  Sharpe Ratio (Val2)
+EW                     2.6956              163.6532               0.0165
+MinVar                 4.9900               93.9528               0.0531
+LASSO                  6.9568               93.1388               0.0747
+Ridge                  7.2664               90.7982               0.0800
+
+Best Strategy by Sharpe Ratio (Validation 2): Ridge
+
+Expected Sharpe ratios (from specification):
+EW: 0.016, MinVar: -0.132
+Actual Sharpe ratios:
+EW: 0.016
+MinVar: 0.053
+Plot saved as 'portfolio_cumulative_returns.png'
+
+Analysis completed successfully!
+Key insights:
+- LASSO regression helps with feature selection (sparse portfolios)
+- Ridge regression provides shrinkage to reduce overfitting
+- Both methods address the overfitting problem in minimum variance portfolios
+- Rolling window ensures out-of-sample evaluation
+        Daily Mean Return (%)  Daily Volatility (%)  Sharpe Ratio (Val2)
+EW                   2.695574            163.653185             0.016471
+MinVar               4.989991             93.952796             0.053112
+LASSO                6.956762             93.138816             0.074692
+Ridge                7.266402             90.798241             0.080028

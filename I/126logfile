@@ -50,7 +50,7 @@ PORTFOLIO PERFORMANCE ANALYSIS
 ============================================================
 Validation 2 period: 2025-01-02 to 2025-06-30
 Number of trading days in validation period: 122
-        Daily Mean Return (%)  Daily Volatility (%)  Sharpe Ratio (Val2)
+Daily Mean Return (%)  Daily Volatility (%)  Sharpe Ratio (Val2)
 EW                     2.6956              163.6532               0.0165
 MinVar               -17.8780              135.7997              -0.1316
 LASSO                  4.3022               97.4382               0.0442
