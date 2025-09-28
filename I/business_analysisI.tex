@@ -91,7 +91,7 @@ Using daily returns data from 100 portfolios formed on Market Equity (ME) and Op
 We address the portfolio optimization challenge where accurate return estimation is notoriously difficult (achieving 2\% test $R^2$ is considered strong performance in finance vs 90\% in other domains). Given this limitation, we focus on minimum variance portfolios but face overfitting issues with 100 portfolios and 126-day rolling windows. We transform this into a linear regression framework and apply LASSO and Ridge regularization to mitigate overfitting.
 
 \subsection{Data Overview}
-We use the "100 Portfolios ME/OP 10x10" dataset from CRSP (202507), specifically extracting the equal-weighted returns section (rows 15,651 to 31,278 in the CSV file) spanning July 1963 to June 2025.
+We use the "100 Portfolios ME/OP 10x10" dataset from CRSP (202507), specifically extracting the equal-weighted returns section (rows 15,651 to 31,278 in the CSV file) spanning July 1963 to June 2025. Please note csv file may show differences in row numbers due to different way of handling blank lines and return. If you find the lines are different, please use double check in your OS.
 
 \textbf{Data Preprocessing:}
 \begin{itemize}
