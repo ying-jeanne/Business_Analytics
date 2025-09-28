@@ -186,15 +186,16 @@ Ridge & 252-day & 7.27 & 90.80 & 0.0800 \\
 
 \subsubsection{Portfolio Grouping for decreasing feature number}
 
-Individual portfolio optimization suffers from insufficient data per feature, similar to how Meituan improved demand forecasting by using broader "fresh food demand" to predict specific "meat demand". We group the 100 ME/OP portfolios into 9 logical categories to improve statistical reliability.
+Individual portfolio optimization suffers from insufficient data per feature, similar to how Meituan improved demand forecasting by using broader "fresh food" to predict specific "meat" subcategories. We group the 100 ME/OP portfolios into 9 logical categories to improve statistical reliability. Why 9? It is kind of a magic number that can make the rules of thumb work, but can be fine-tuned.
 
-\textbf{Grouping Methodology:}
+\textbf{Grouping Methodology}
+
 We create a 3×3 matrix combining size and profitability dimensions. Size groups are Small (ME1-3), Medium (ME4-7), Large (ME8-10), while profitability groups are Low (OP1-3), Medium (OP4-7), High (OP8-10). Each group's return series is calculated as the equal-weighted average of its constituent portfolios, resulting in groups containing 9-16 portfolios each depending on the intersection size.
 
-\textbf{Implementation:}
+\textbf{Implementation}
 \begin{itemize}
     \item Create 9 grouped return series by equal-weighting constituent portfolios
-    \item Apply LASSO/Ridge optimization to 9 groups (14 observations per feature)
+    \item Apply 4 Strategy as mentioned above to 9 groups (14 observations per feature)
     \item Distribute group weights equally among constituent portfolios
 \end{itemize}
 
@@ -210,14 +211,16 @@ Table \ref{tab:grouping_comparison} compares individual versus grouped portfolio
 
 \begin{table}[h]
 \centering
-\caption{Individual vs. Grouped Portfolio Performance}
+\caption{Individual vs. Grouped Portfolio Performance both with window size 126 days}
 \label{tab:grouping_comparison}
 \begin{tabular}{lcccc}
 \hline
-Strategy & Approach & Sharpe Ratio & Daily Return (\%) & Daily Vol (\%) \\
+Strategy & Approach & Daily Return (\%) & Daily Vol (\%) & Sharpe Ratio \\
 \hline
 EW & Individual & [TBD] & [TBD] & [TBD] \\
 EW & Grouped & [TBD] & [TBD] & [TBD] \\
+MinVar & Individual & [TBD] & [TBD] & [TBD] \\
+MinVar & Grouped & [TBD] & [TBD] & [TBD] \\
 LASSO & Individual & [TBD] & [TBD] & [TBD] \\
 LASSO & Grouped & [TBD] & [TBD] & [TBD] \\
 Ridge & Individual & [TBD] & [TBD] & [TBD] \\

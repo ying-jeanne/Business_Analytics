@@ -4,7 +4,6 @@ from sklearn.linear_model import Ridge, LassoCV, RidgeCV
 from sklearn.model_selection import TimeSeriesSplit, cross_val_score
 import matplotlib.pyplot as plt
 import warnings
-from tqdm import tqdm
 import argparse
 
 warnings.filterwarnings('ignore')
@@ -163,6 +162,156 @@ class PortfolioOptimizer:
         weights = w_EW - N @ beta
         return weights
     
+    def map_column_to_group(self, column_name):
+        """
+        Map portfolio column name to group assignment
+        Returns tuple (size_group, prof_group)
+        """
+        col = column_name.strip()
+        
+        # Handle special cases
+        if col == "SMALL LoOP":
+            return ("Small", "Low")
+        elif col == "SMALL HiOP":
+            return ("Small", "High")
+        elif col == "BIG LoOP":
+            return ("Large", "Low")
+        elif col == "BIG HiOP":
+            return ("Large", "High")
+        
+        # Parse standard format: "ME# OP#"
+        if "ME" in col and "OP" in col:
+            parts = col.split()
+            me_part = [p for p in parts if p.startswith("ME")][0]
+            op_part = [p for p in parts if p.startswith("OP")][0]
+            
+            me_num = int(me_part.replace("ME", ""))
+            op_num = int(op_part.replace("OP", ""))
+            
+            # Map ME to size groups
+            if me_num <= 3:
+                size_group = "Small"
+            elif me_num <= 7:
+                size_group = "Medium"
+            else:
+                size_group = "Large"
+            
+            # Map OP to profitability groups
+            if op_num <= 3:
+                prof_group = "Low"
+            elif op_num <= 7:
+                prof_group = "Medium"
+            else:
+                prof_group = "High"
+            
+            return (size_group, prof_group)
+        
+        # Default fallback
+        return ("Unknown", "Unknown")
+    
+    def create_portfolio_groups(self, returns_data):
+        """
+        Group 100 portfolios into 9 logical categories (3x3 matrix)
+        Returns DataFrame with 9 columns representing grouped portfolios
+        """
+        # Initialize group collections
+        groups = {}
+        for size in ["Small", "Medium", "Large"]:
+            for prof in ["Low", "Medium", "High"]:
+                groups[f"{size}_{prof}"] = []
+        
+        # Map each portfolio to its group
+        for col in returns_data.columns:
+            size_group, prof_group = self.map_column_to_group(col)
+            if size_group != "Unknown" and prof_group != "Unknown":
+                group_name = f"{size_group}_{prof_group}"
+                groups[group_name].append(col)
+        
+        # Create grouped return series by equal-weighting within each group
+        grouped_returns = pd.DataFrame(index=returns_data.index)
+        
+        for group_name, portfolio_list in groups.items():
+            if portfolio_list:  # Only create group if it has portfolios
+                grouped_returns[group_name] = returns_data[portfolio_list].mean(axis=1)
+        
+        print(f"Created {len(grouped_returns.columns)} portfolio groups:")
+        for group_name, portfolio_list in groups.items():
+            if portfolio_list:
+                print(f"  {group_name}: {len(portfolio_list)} portfolios")
+        
+        return grouped_returns
+    
+    def create_portfolio_mapping(self):
+        """
+        Create one-time mapping of portfolios to groups for efficient reuse
+        Returns dict with group names as keys and portfolio lists as values
+        """
+        groups = {}
+        for size in ["Small", "Medium", "Large"]:
+            for prof in ["Low", "Medium", "High"]:
+                groups[f"{size}_{prof}"] = []
+        
+        # Map each portfolio to its group
+        for col in self.returns.columns:
+            size_group, prof_group = self.map_column_to_group(col)
+            if size_group != "Unknown" and prof_group != "Unknown":
+                group_name = f"{size_group}_{prof_group}"
+                groups[group_name].append(col)
+        
+        # Remove empty groups
+        groups = {k: v for k, v in groups.items() if v}
+        
+        print(f"Portfolio mapping created: {len(groups)} groups")
+        for group_name, portfolio_list in groups.items():
+            print(f"  {group_name}: {len(portfolio_list)} portfolios")
+        
+        return groups
+    
+    def apply_portfolio_grouping(self, returns_data, portfolio_mapping):
+        """
+        Apply pre-computed portfolio mapping to returns data (fast operation)
+        """
+        grouped_returns = pd.DataFrame(index=returns_data.index)
+        
+        for group_name, portfolio_list in portfolio_mapping.items():
+            # Only include portfolios that exist in current returns_data
+            available_portfolios = [p for p in portfolio_list if p in returns_data.columns]
+            if available_portfolios:
+                grouped_returns[group_name] = returns_data[available_portfolios].mean(axis=1)
+        
+        return grouped_returns
+    
+    def distribute_group_weights(self, group_weights, original_columns):
+        """
+        Distribute group weights back to individual portfolios
+        Each portfolio in a group gets equal share of group weight
+        """
+        # Initialize portfolio weights
+        portfolio_weights = np.zeros(len(original_columns))
+        
+        # Create mapping from groups to portfolios
+        group_portfolios = {}
+        for i, col in enumerate(original_columns):
+            size_group, prof_group = self.map_column_to_group(col)
+            if size_group != "Unknown" and prof_group != "Unknown":
+                group_name = f"{size_group}_{prof_group}"
+                if group_name not in group_portfolios:
+                    group_portfolios[group_name] = []
+                group_portfolios[group_name].append(i)
+        
+        # Distribute weights
+        group_names = [f"{size}_{prof}" for size in ["Small", "Medium", "Large"] 
+                      for prof in ["Low", "Medium", "High"]]
+        
+        for j, group_name in enumerate(group_names):
+            if j < len(group_weights) and group_name in group_portfolios:
+                portfolio_indices = group_portfolios[group_name]
+                weight_per_portfolio = group_weights[j] / len(portfolio_indices)
+                for idx in portfolio_indices:
+                    portfolio_weights[idx] = weight_per_portfolio
+        
+        return portfolio_weights
+    
     def rolling_window_backtest(self, window_size=126):
         """
         Perform rolling window backtesting
@@ -234,6 +383,84 @@ class PortfolioOptimizer:
         })
         self.results.set_index('Date', inplace=True)  
         print(f"Backtesting completed: {len(self.results)} out-of-sample days")
+    
+    def rolling_window_backtest_grouped(self, window_size=126):
+        """
+        Perform rolling window backtesting using portfolio grouping (9 groups instead of 100)
+        """
+        print(f"Starting grouped rolling window backtesting with {window_size}-day windows...")
+        print("Using portfolio grouping: 100 portfolios → 9 groups")
+        
+        # Create portfolio mapping and group entire dataset once (optimization!)
+        portfolio_mapping = self.create_portfolio_mapping()
+        self.grouped_data = self.apply_portfolio_grouping(self.returns, portfolio_mapping)
+        
+        # Initialize results storage
+        dates = []
+        ew_returns = []
+        minvar_returns = []
+        lasso_returns = []
+        ridge_returns = []
+        
+        # Rolling window loop
+        total_days = len(self.returns) - window_size
+        for i in range(window_size, len(self.returns)):
+            # Simple progress logging every 500 days
+            if (i - window_size) % 500 == 0:
+                current_day = i - window_size + 1
+                print(f"Processing day {current_day}/{total_days} ({current_day/total_days*100:.1f}%)")
+            
+            # Training window - use sliced grouped data
+            train_data = self.grouped_data.iloc[i-window_size:i]
+            
+            # Next day (out-of-sample) - original 100 portfolios
+            test_date = self.returns.index[i]
+            test_returns = self.returns.iloc[i]
+            
+            # Equal-weighted portfolio (same as individual approach)
+            ew_weights = np.ones(len(test_returns)) / len(test_returns)
+            ew_return = np.sum(ew_weights * test_returns)
+            
+            # Minimum variance portfolio on grouped data
+            minvar_weights_grouped = self.calculate_minimum_variance_portfolio(train_data)
+            # Distribute group weights back to individual portfolios
+            minvar_weights = self.distribute_group_weights(minvar_weights_grouped, self.returns.columns)
+            minvar_return = np.sum(minvar_weights * test_returns)
+            
+            # Regression-based portfolios on grouped data
+            X, y, w_EW_grouped, N = self.transform_to_regression(train_data)
+            lasso_model, ridge_model = self.fit_regularized_models(X, y)
+            
+            # LASSO portfolio
+            lasso_beta = lasso_model.coef_
+            lasso_weights_grouped = self.calculate_portfolio_weights(lasso_beta, w_EW_grouped, N)
+            lasso_weights = self.distribute_group_weights(lasso_weights_grouped, self.returns.columns)
+            lasso_return = np.sum(lasso_weights * test_returns)
+            
+            # Ridge portfolio
+            ridge_beta = ridge_model.coef_
+            ridge_weights_grouped = self.calculate_portfolio_weights(ridge_beta, w_EW_grouped, N)
+            ridge_weights = self.distribute_group_weights(ridge_weights_grouped, self.returns.columns)
+            ridge_return = np.sum(ridge_weights * test_returns)
+            
+            # Store results
+            dates.append(test_date)
+            ew_returns.append(ew_return)
+            minvar_returns.append(minvar_return)
+            lasso_returns.append(lasso_return)
+            ridge_returns.append(ridge_return)
+        
+        # Create results DataFrame
+        self.results = pd.DataFrame({
+            'Date': dates,
+            'EW': ew_returns,
+            'MinVar': minvar_returns,
+            'LASSO': lasso_returns,
+            'Ridge': ridge_returns
+        })
+        self.results.set_index('Date', inplace=True)  
+        print(f"Grouped backtesting completed: {len(self.results)} out-of-sample days")
+        print(f"Statistical improvement: {window_size}/9 = {window_size/9:.1f} observations per feature")
         
     def calculate_performance_metrics(self):
         """Calculate performance metrics including Sharpe ratios for Validation 2 period"""
@@ -321,24 +548,69 @@ class PortfolioOptimizer:
         filename = f'portfolio_cumulative_returns_{window_size}day.png'
         plt.savefig(filename, dpi=500, bbox_inches='tight')
         print(f"Plot saved as '{filename}'")
+    
+    def plot_cumulative_returns_grouped(self, window_size=126):
+        """Plot cumulative returns for all strategies with grouped analysis"""
+        cumulative_returns = (1 + self.results/100).cumprod()
+        
+        # Define distinct colors and line styles for each strategy
+        style_config = {
+            'EW': {'color': 'blue', 'linestyle': '-', 'linewidth': 2.5},
+            'MinVar': {'color': 'red', 'linestyle': '-', 'linewidth': 2.5},
+            'LASSO': {'color': 'green', 'linestyle': '-', 'linewidth': 2.5},
+            'Ridge': {'color': 'orange', 'linestyle': '-', 'linewidth': 2.5}
+        }
+        
+        plt.figure(figsize=(14, 10), dpi=500)  # High resolution
+        
+        for strategy in cumulative_returns.columns:
+            style = style_config.get(strategy, {'color': 'black', 'linestyle': '-', 'linewidth': 2})
+            plt.plot(cumulative_returns.index, cumulative_returns[strategy], 
+                    label=f"{strategy} (Grouped)", 
+                    color=style['color'],
+                    linestyle=style['linestyle'],
+                    linewidth=style['linewidth'])
+        
+        plt.title('Cumulative Returns: Portfolio Strategies Comparison (Grouped Analysis)', fontsize=16, fontweight='bold')
+        plt.xlabel('Date', fontsize=14)
+        plt.ylabel('Cumulative Return', fontsize=14)
+        plt.legend(fontsize=12, loc='upper left')
+        plt.grid(True, alpha=0.3)
+        plt.yscale('log')
+        plt.tight_layout()
+        
+        # Save in high resolution for report with grouped suffix
+        filename = f'portfolio_cumulative_returns_{window_size}day_grouped.png'
+        plt.savefig(filename, dpi=500, bbox_inches='tight')
+        print(f"Plot saved as '{filename}'")
 
     def run_future_analysis(self, window_size=126):
         """
-        Placeholder for future analysis implementation (Mode 3)
-        This method can be extended to implement portfolio grouping, 
-        regime-adaptive strategies, or other advanced techniques.
+        Portfolio grouping analysis implementation (Mode 3)
+        Groups 100 portfolios into 9 categories using 3x3 ME/OP matrix
         """
-        print("FUTURE ANALYSIS MODE - PLACEHOLDER")
+        print("PORTFOLIO OPTIMIZATION WITH GROUPED PORTFOLIOS (3x3 ME/OP MATRIX)")
         print("="*60)
-        print("This mode is reserved for future implementations such as:")
-        print("- Portfolio grouping (3x3 ME/OP matrix)")
-        print("- Regime-adaptive strategy selection")
-        print("- Ensemble methods")
-        print("- Alternative loss functions")
+        print("Portfolio Grouping Implementation:")
+        print("- Size groups: Small (ME1-3), Medium (ME4-7), Large (ME8-10)")
+        print("- Profitability groups: Low (OP1-3), Medium (OP4-7), High (OP8-10)")
+        print("- Statistical improvement: 126/9 = 14.0 observations per feature")
+        print("- Compare to individual: 126/100 = 1.26 observations per feature")
         print("-" * 60)
         
-        # For now, run standard analysis
-        return self.run_full_analysis(window_size)
+        # Load data (same as individual analysis)
+        self.load_data()
+        
+        # Run grouped backtesting
+        self.rolling_window_backtest_grouped(window_size)
+        
+        # Calculate and display performance metrics
+        performance_metrics = self.calculate_performance_metrics()
+        
+        # Plot cumulative returns with grouped suffix
+        self.plot_cumulative_returns_grouped(window_size)
+        
+        return performance_metrics
     
     def run_full_analysis(self, window_size=126):
         """Run complete portfolio optimization analysis"""

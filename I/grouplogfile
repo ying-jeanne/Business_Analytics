@@ -1,0 +1,102 @@
+Starting Portfolio Optimization Analysis...
+Selected Mode 3: 126-day with 9-portfolios grouping
+This implementation follows:
+- Rolling window backtesting (126-day windows)
+- Linear regression transformation (w = w_EW - Nβ)
+- LASSO and Ridge regularization with cross-validation
+- Performance evaluation using Sharpe ratio
+- Comparison of EW, MinVar, LASSO, and Ridge portfolios
+------------------------------------------------------------
+PORTFOLIO OPTIMIZATION WITH GROUPED PORTFOLIOS (3x3 ME/OP MATRIX)
+============================================================
+Portfolio Grouping Implementation:
+- Size groups: Small (ME1-3), Medium (ME4-7), Large (ME8-10)
+- Profitability groups: Low (OP1-3), Medium (OP4-7), High (OP8-10)
+- Statistical improvement: 126/9 = 14.0 observations per feature
+- Compare to individual: 126/100 = 1.26 observations per feature
+------------------------------------------------------------
+Loading average equal weighted portfolio returns data...
+Data loaded: 15625 days, 100 portfolios
+Date range: 1963-07-01 00:00:00 to 2025-07-31 00:00:00
+Created 9 portfolio groups:
+  Small_Low: 9 portfolios
+  Small_Medium: 12 portfolios
+  Small_High: 9 portfolios
+  Medium_Low: 12 portfolios
+  Medium_Medium: 16 portfolios
+  Medium_High: 12 portfolios
+  Large_Low: 9 portfolios
+  Large_Medium: 12 portfolios
+  Large_High: 9 portfolios
+Starting grouped rolling window backtesting with 126-day windows...
+Using portfolio grouping: 100 portfolios → 9 groups
+Portfolio mapping created: 9 groups
+  Small_Low: 9 portfolios
+  Small_Medium: 12 portfolios
+  Small_High: 9 portfolios
+  Medium_Low: 12 portfolios
+  Medium_Medium: 16 portfolios
+  Medium_High: 12 portfolios
+  Large_Low: 9 portfolios
+  Large_Medium: 12 portfolios
+  Large_High: 9 portfolios
+Processing day 1/15499 (0.0%)
+Processing day 501/15499 (3.2%)
+Processing day 1001/15499 (6.5%)
+Processing day 1501/15499 (9.7%)
+Processing day 2001/15499 (12.9%)
+Processing day 2501/15499 (16.1%)
+Processing day 3001/15499 (19.4%)
+Processing day 3501/15499 (22.6%)
+Processing day 4001/15499 (25.8%)
+Processing day 4501/15499 (29.0%)
+Processing day 5001/15499 (32.3%)
+Processing day 5501/15499 (35.5%)
+Processing day 6001/15499 (38.7%)
+Processing day 6501/15499 (41.9%)
+Processing day 7001/15499 (45.2%)
+Processing day 7501/15499 (48.4%)
+Processing day 8001/15499 (51.6%)
+Processing day 8501/15499 (54.8%)
+Processing day 9001/15499 (58.1%)
+Processing day 9501/15499 (61.3%)
+Processing day 10001/15499 (64.5%)
+Processing day 10501/15499 (67.8%)
+Processing day 11001/15499 (71.0%)
+Processing day 11501/15499 (74.2%)
+Processing day 12001/15499 (77.4%)
+Processing day 12501/15499 (80.7%)
+Processing day 13001/15499 (83.9%)
+Processing day 13501/15499 (87.1%)
+Processing day 14001/15499 (90.3%)
+Processing day 14501/15499 (93.6%)
+Processing day 15001/15499 (96.8%)
+Grouped backtesting completed: 15499 out-of-sample days
+Statistical improvement: 126/9 = 14.0 observations per feature
+
+============================================================
+PORTFOLIO PERFORMANCE ANALYSIS
+============================================================
+Validation 2 period: 2025-01-02 to 2025-06-30
+Number of trading days in validation period: 122
+        Daily Mean Return (%)  Daily Volatility (%)  Sharpe Ratio (Val2)
+EW                     2.6956              163.6532               0.0165
+MinVar                 8.6736              118.0435               0.0735
+LASSO                  8.4597              119.1300               0.0710
+Ridge                  7.7100              116.8850               0.0660
+
+Best Strategy by Sharpe Ratio (Validation 2): MinVar
+
+Expected Sharpe ratios (from specification):
+EW: 0.016, MinVar: -0.132
+Actual Sharpe ratios:
+EW: 0.016
+MinVar: 0.073
+Plot saved as 'portfolio_cumulative_returns_126day_grouped.png'
+
+Analysis completed successfully!
+        Daily Mean Return (%)  Daily Volatility (%)  Sharpe Ratio (Val2)
+EW                   2.695574            163.653185             0.016471
+MinVar               8.673634            118.043510             0.073478
+LASSO                8.459729            119.130001             0.071013
+Ridge                7.709998            116.884982             0.065962
