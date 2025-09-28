@@ -5,6 +5,7 @@ from sklearn.model_selection import TimeSeriesSplit, cross_val_score
 import matplotlib.pyplot as plt
 import warnings
 from tqdm import tqdm
+import argparse
 
 warnings.filterwarnings('ignore')
 
@@ -286,7 +287,7 @@ class PortfolioOptimizer:
         
         return results_df
     
-    def plot_cumulative_returns(self):
+    def plot_cumulative_returns(self, window_size=126):
         """Plot cumulative returns for all strategies"""
         cumulative_returns = (1 + self.results/100).cumprod()
         
@@ -316,10 +317,29 @@ class PortfolioOptimizer:
         plt.yscale('log')
         plt.tight_layout()
         
-        # Save in high resolution for report
-        plt.savefig('portfolio_cumulative_returns.png', dpi=500, bbox_inches='tight')
-        print("Plot saved as 'portfolio_cumulative_returns.png'")
+        # Save in high resolution for report with window size in filename
+        filename = f'portfolio_cumulative_returns_{window_size}day.png'
+        plt.savefig(filename, dpi=500, bbox_inches='tight')
+        print(f"Plot saved as '{filename}'")
 
+    def run_future_analysis(self, window_size=126):
+        """
+        Placeholder for future analysis implementation (Mode 3)
+        This method can be extended to implement portfolio grouping, 
+        regime-adaptive strategies, or other advanced techniques.
+        """
+        print("FUTURE ANALYSIS MODE - PLACEHOLDER")
+        print("="*60)
+        print("This mode is reserved for future implementations such as:")
+        print("- Portfolio grouping (3x3 ME/OP matrix)")
+        print("- Regime-adaptive strategy selection")
+        print("- Ensemble methods")
+        print("- Alternative loss functions")
+        print("-" * 60)
+        
+        # For now, run standard analysis
+        return self.run_full_analysis(window_size)
+    
     def run_full_analysis(self, window_size=126):
         """Run complete portfolio optimization analysis"""
         print("PORTFOLIO OPTIMIZATION WITH LASSO AND RIDGE REGRESSION")
@@ -335,15 +355,32 @@ class PortfolioOptimizer:
         performance_metrics = self.calculate_performance_metrics()
 
         # Plot cumulative returns
-        self.plot_cumulative_returns()
+        self.plot_cumulative_returns(window_size)
         return performance_metrics
 
 def main():
     """Main function to run the portfolio optimization analysis"""
     
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Portfolio Optimization Analysis')
+    parser.add_argument('--mode', type=int, choices=[1, 2, 3], default=1,
+                       help='Analysis mode: 1=126-day window, 2=252-day window, 3=future implementation')
+    args = parser.parse_args()
+    
+    # Map mode to configuration
+    window_size = 126
+    if args.mode == 1:
+        mode_name = "126-day window"
+    elif args.mode == 2:
+        window_size = 252
+        mode_name = "252-day window"
+    elif args.mode == 3:
+        mode_name = "126-day with 9-portfolios grouping"
+    
     print("Starting Portfolio Optimization Analysis...")
+    print(f"Selected Mode {args.mode}: {mode_name}")
     print("This implementation follows:")
-    print("- Rolling window backtesting (126-day windows)")
+    print(f"- Rolling window backtesting ({window_size}-day windows)")
     print("- Linear regression transformation (w = w_EW - Nβ)")
     print("- LASSO and Ridge regularization with cross-validation")
     print("- Performance evaluation using Sharpe ratio")
@@ -353,17 +390,14 @@ def main():
     # Initialize optimizer
     optimizer = PortfolioOptimizer()
     
-    # Run full analysis
+    # Run analysis based on mode
     try:
-        results = optimizer.run_full_analysis()
+        if args.mode == 3:
+            results = optimizer.run_future_analysis(window_size=window_size)
+        else:
+            results = optimizer.run_full_analysis(window_size=window_size)
         
         print("\nAnalysis completed successfully!")
-        print("Key insights:")
-        print("- LASSO regression helps with feature selection (sparse portfolios)")
-        print("- Ridge regression provides shrinkage to reduce overfitting")
-        print("- Both methods address the overfitting problem in minimum variance portfolios")
-        print("- Rolling window ensures out-of-sample evaluation")
-        
         return optimizer, results
         
     except FileNotFoundError:
