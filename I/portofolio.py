@@ -1,9 +1,7 @@
 import pandas as pd
 import numpy as np
-from sklearn.linear_model import Lasso, Ridge, LassoCV, RidgeCV
-from sklearn.model_selection import TimeSeriesSplit, GridSearchCV, cross_val_score
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import make_scorer
+from sklearn.linear_model import Ridge, LassoCV, RidgeCV
+from sklearn.model_selection import TimeSeriesSplit, cross_val_score
 import matplotlib.pyplot as plt
 import warnings
 from tqdm import tqdm
@@ -90,41 +88,36 @@ class PortfolioOptimizer:
     def fit_regularized_models(self, X, y):
         """
         Fit LASSO and Ridge models using LassoCV and RidgeCV with specified alpha range
+        Note: No standardization needed as stock returns are unitless and already comparable
         """
-        # Standardize features
-        scaler = StandardScaler()
-        X_scaled = scaler.fit_transform(X)
-        
         # Time series cross-validation (preserving temporal order)
         tscv = TimeSeriesSplit(n_splits=5)
 
         # Alpha values as specified in requirements, 101 is indeed too long (: np.logspace(-8,8,21)
         alphas = np.logspace(-8, 8, 21)
 
-        # Fit LassoCV and RidgeCV
+        # Fit LassoCV and RidgeCV directly on original data
         lasso_cv = LassoCV(alphas=alphas, cv=tscv, max_iter=2000)
         ridge_cv = RidgeCV(alphas=alphas, cv=tscv)
         
-        lasso_cv.fit(X_scaled, y)
-        ridge_cv.fit(X_scaled, y)
+        lasso_cv.fit(X, y)
+        ridge_cv.fit(X, y)
         
-        return lasso_cv, ridge_cv, scaler
+        return lasso_cv, ridge_cv
     
     def plot_lambda_selection(self, X, y):
         """
         Plot MSE vs -log(alpha) for lambda selection demonstration
         Call this once to see how lambda selection works
         """
-        scaler = StandardScaler()
-        X_scaled = scaler.fit_transform(X)
         tscv = TimeSeriesSplit(n_splits=5)
         alphas = np.logspace(-8, 8, 101) 
 
-        # Fit models
+        # Fit models directly on original data (no standardization)
         lasso_cv = LassoCV(alphas=alphas, cv=tscv, max_iter=2000)
         ridge_cv = RidgeCV(alphas=alphas, cv=tscv)
-        lasso_cv.fit(X_scaled, y)
-        ridge_cv.fit(X_scaled, y)
+        lasso_cv.fit(X, y)
+        ridge_cv.fit(X, y)
         
         # Plot
         plt.figure(figsize=(12, 5))
@@ -145,7 +138,7 @@ class PortfolioOptimizer:
         plt.subplot(1, 2, 2)
         ridge_mse = []
         for alpha in alphas:
-            ridge_scores = cross_val_score(Ridge(alpha=alpha), X_scaled, y, 
+            ridge_scores = cross_val_score(Ridge(alpha=alpha), X, y, 
                                          cv=tscv, scoring='neg_mean_squared_error')
             ridge_mse.append(-ridge_scores.mean())
         
@@ -186,7 +179,13 @@ class PortfolioOptimizer:
         ridge_returns = []
         
         # Rolling window loop
-        for i in tqdm(range(window_size, len(self.returns)), desc="Rolling window backtest test in progress", unit="days", miniters=200, mininterval=2.0):
+        total_days = len(self.returns) - window_size
+        for i in range(window_size, len(self.returns)):
+            # Simple progress logging every 500 days
+            if (i - window_size) % 500 == 0:
+                current_day = i - window_size + 1
+                print(f"Processing day {current_day}/{total_days} ({current_day/total_days*100:.1f}%)")
+            
             # Training window
             train_data = self.returns.iloc[i-window_size:i]
             
@@ -205,7 +204,7 @@ class PortfolioOptimizer:
             # Regression-based portfolios
             X, y, w_EW, N = self.transform_to_regression(train_data)
 
-            lasso_model, ridge_model, scaler = self.fit_regularized_models(X, y)
+            lasso_model, ridge_model = self.fit_regularized_models(X, y)
             
             # LASSO portfolio
             lasso_beta = lasso_model.coef_
@@ -287,23 +286,16 @@ class PortfolioOptimizer:
         
         return results_df
     
-    def calculate_max_drawdown(self, returns):
-        """Calculate maximum drawdown"""
-        cumulative = (1 + returns).cumprod()
-        rolling_max = cumulative.expanding().max()
-        drawdown = (cumulative - rolling_max) / rolling_max
-        return drawdown.min()
-    
     def plot_cumulative_returns(self):
         """Plot cumulative returns for all strategies"""
-        cumulative_returns = (1 + self.results).cumprod()
+        cumulative_returns = (1 + self.results/100).cumprod()
         
         # Define distinct colors and line styles for each strategy
         style_config = {
             'EW': {'color': 'blue', 'linestyle': '-', 'linewidth': 2.5},
-            'MinVar': {'color': 'red', 'linestyle': '--', 'linewidth': 2.5},
-            'LASSO': {'color': 'green', 'linestyle': '-.', 'linewidth': 2.5},
-            'Ridge': {'color': 'orange', 'linestyle': ':', 'linewidth': 3}
+            'MinVar': {'color': 'red', 'linestyle': '-', 'linewidth': 2.5},
+            'LASSO': {'color': 'green', 'linestyle': '-', 'linewidth': 2.5},
+            'Ridge': {'color': 'orange', 'linestyle': '-', 'linewidth': 2.5}
         }
         
         plt.figure(figsize=(14, 10), dpi=500)  # High resolution
@@ -385,3 +377,4 @@ def main():
 
 if __name__ == "__main__":
     optimizer, results = main()
+    print(results)
