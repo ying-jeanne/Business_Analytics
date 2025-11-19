@@ -53,9 +53,9 @@
 - Financial ratios (repayment_ratio, utilization_rate, repayment_stability)
 
 **Questions:**
-- Are these features sufficient, or should we engineer more?
-- Should we perform feature selection (e.g., remove correlated features)?
-- How to validate feature importance: coefficient analysis, permutation importance, or SHAP?
+- Are these features sufficient, or should we engineer more? 34 features for linear regression vs 30000 data points.
+- Should we perform feature selection (e.g., remove correlated features)? maybe not since it is not overfitting.
+- How to validate feature importance: coefficient analysis, permutation importance, or SHAP? this probably needed.
 - Should we check residual patterns by class (defaulter vs non-defaulter)?
 
 ---
