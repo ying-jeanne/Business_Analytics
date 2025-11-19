@@ -5,17 +5,29 @@
 - **Context:** Standard SVC with RBF kernel took >15 minutes on our dataset (30,000 samples). LinearSVC converges in <1 minute.
 - **Trade-off:** What predictive power (AUC improvement) justifies the 15x computational cost in practice?
 
----
+## 2. Cost-Sensitive Learning Strategy: When to Apply Business Cost?
+**Three possible approaches:**
 
-## 2. Cost-Sensitive Learning: Approach Selection
-**Two approaches compared:**
-- **Option A (Post-hoc):** Train with standard loss (AUC maximization) → Optimize threshold on validation set using business cost
-- **Option B (During training):** Use custom scorer in GridSearchCV that directly optimizes business cost
+**Option A (Post-hoc - Current):**
+1. GridSearchCV optimizes each model using standard metric (AUC for LR/SVM, MSE for Ridge)
+2. Select best model by validation AUC
+3. **Then** optimize decision threshold using business cost function
+
+**Option B (During Model Selection):**
+1. GridSearchCV optimizes each model using standard metric (AUC/MSE)
+2. **Select best model by minimum business cost** (instead of AUC)
+3. Then optimize threshold using business cost
+
+**Option C (During Training):**
+1. Use **custom scorer in GridSearchCV** that directly optimizes business cost
+2. Each model learns to minimize business cost during cross-validation
+3. Select model and threshold by business cost
 
 **Questions:**
-- Which approach is preferred in industry?
-- Does Option B risk overfitting to validation set costs?
-- Is threshold optimization sufficient, or should we retrain models with cost-weighted samples?
+- Which approach is preferred in industry practice?
+- Does **Option A** (separate optimization) provide enough flexibility?
+- Does **Option C** risk overfitting to validation set cost structure?
+- How should we balance statistical performance (AUC) vs business objective (cost)?
 
 ---
 
@@ -31,20 +43,6 @@
   ```
 - Is 10:1 too conservative? Should we use 50:1 based on actual credit limits?
 - How sensitive are results to this ratio (sensitivity analysis needed)?
-
----
-
-## 4. Model Selection Criterion: AUC vs Business Cost
-**Current approach:**
-1. GridSearchCV optimizes AUC for each model (Ridge, Logistic, SVM)
-2. Select best model by validation AUC
-3. Optimize threshold using business cost
-
-**Alternative:** Select model directly by minimum validation cost?
-
-**Question:** Should statistical performance (AUC) and business objective (cost) be optimized separately, or jointly?
-
----
 
 ## 5. Feature Engineering: Validation & Selection
 **8 engineered features created:**
