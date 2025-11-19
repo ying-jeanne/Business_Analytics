@@ -622,32 +622,30 @@ class PortfolioOptimizer:
             
             # Select strategy based on regime
             if current_regime == 'High':
-                current_strategy = 'LASSO'
-            else:
                 current_strategy = 'EW'
+            else:
+                current_strategy = 'LASSO'
             
             # Track regime switches
             if last_strategy is not None and last_strategy != current_strategy:
                 regime_switches += 1
             last_strategy = current_strategy
             
-            # Calculate returns for all strategies (for comparison)
-            # Equal-weighted
-            ew_weights = np.ones(len(test_returns)) / len(test_returns)
-            ew_return = np.sum(ew_weights * test_returns)
-            
-            # LASSO and Ridge (calculate both even if not used)
-            X, y, w_EW, N = self.transform_to_regression(train_data)
-            lasso_model, _ = self.fit_regularized_models(X, y)
-            
-            lasso_beta = lasso_model.coef_
-            lasso_weights = self.calculate_portfolio_weights(lasso_beta, w_EW, N)
-            lasso_return = np.sum(lasso_weights * test_returns)
-            
             # Select adaptive return based on regime
             if current_strategy == 'LASSO':
+                # LASSO and Ridge (calculate both even if not used)
+                X, y, w_EW, N = self.transform_to_regression(train_data)
+                lasso_model, _ = self.fit_regularized_models(X, y)
+                
+                lasso_beta = lasso_model.coef_
+                lasso_weights = self.calculate_portfolio_weights(lasso_beta, w_EW, N)
+                lasso_return = np.sum(lasso_weights * test_returns)
                 adaptive_return = lasso_return
             else:
+                # Calculate returns for all strategies (for comparison)
+                # Equal-weighted
+                ew_weights = np.ones(len(test_returns)) / len(test_returns)
+                ew_return = np.sum(ew_weights * test_returns)
                 adaptive_return = ew_return
             
             # Store results
@@ -657,15 +655,15 @@ class PortfolioOptimizer:
             regime_classification.append(current_regime)
             
             # Store static strategy results for comparison
-            ew_returns.append(ew_return)
-            lasso_returns.append(lasso_return)
+            # ew_returns.append(ew_return)
+            # lasso_returns.append(lasso_return)
         
         # Create results DataFrame
         self.results = pd.DataFrame({
             'Date': dates,
             'Adaptive': adaptive_returns,
-            'EW': ew_returns,
-            'LASSO': lasso_returns,
+            # 'EW': ew_returns,
+            # 'LASSO': lasso_returns,
             'Strategy': strategy_used,
             'Regime': regime_classification
         })
