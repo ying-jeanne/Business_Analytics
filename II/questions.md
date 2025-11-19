@@ -44,6 +44,8 @@
 - Is 10:1 too conservative? Should we use 50:1 based on actual credit limits?
 - How sensitive are results to this ratio (sensitivity analysis needed)?
 
+![Cost Sensitivity Analysis](./image.png)
+
 ## 5. Feature Engineering: Validation & Selection
 **8 engineered features created:**
 - Temporal slopes (bill_slope, pay_slope, utilization_trend)
