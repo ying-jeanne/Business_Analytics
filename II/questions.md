@@ -1,35 +1,125 @@
-1. LinearSVC vs SVC:
+# Questions for Professor Consultation - Credit Default Prediction Project
 
-Is LinearSVC appropriate for this credit default problem?
-What predictive power do we lose by using linear decision boundary? We have tried the normal svc, it is extremely slow
+## 1. Model Architecture: LinearSVC vs SVC
+- **Question:** Is LinearSVC appropriate for credit default prediction, or should we explore non-linear kernels despite computational cost?
+- **Context:** Standard SVC with RBF kernel took >15 minutes on our dataset (30,000 samples). LinearSVC converges in <1 minute.
+- **Trade-off:** What predictive power (AUC improvement) justifies the 15x computational cost in practice?
 
-2. Cost-Sensitive Learning Strategy:
-For linear regression, should I optimize threshold after training (post-hoc)?
-Or should I use custom loss during GridSearchCV?
+---
 
-3. Industry best practice for credit risk modeling?
-Business Cost Structure:
-Is FN:FP = 10:1 a reasonable cost ratio for credit default?
-How should this ratio be determined in practice? we have the data, should we calculate the average of based on real default/no default?
+## 2. Cost-Sensitive Learning: Approach Selection
+**Two approaches compared:**
+- **Option A (Post-hoc):** Train with standard loss (AUC maximization) → Optimize threshold on validation set using business cost
+- **Option B (During training):** Use custom scorer in GridSearchCV that directly optimizes business cost
 
-4. Model Selection Criteria:
-Currently selecting best model by AUC on validation set, with the standard loss function (L2, hinge and logistic)
-Should I select by business cost instead? 
-How to balance statistical performance vs business objective?
+**Questions:**
+- Which approach is preferred in industry?
+- Does Option B risk overfitting to validation set costs?
+- Is threshold optimization sufficient, or should we retrain models with cost-weighted samples?
 
-5. Feature Engineering Validation:
-Are the 8 engineered features (slopes, ratios, etc.) appropriate? should we select more? residual analysis based on the class?
+---
 
-6. Some functions have the imbalanced function when training the data, should we explicitely deal with the imbalance ourselves (undersampling or oversampling, try different method and compare validation cost?)
-  
-7. Three-Tier Decision System, so when we have the dicision also have the strategy, how we should evaluate the performance of our decision? model efficiency, and business efficiency would be different. Per zone accuracy? 
+## 3. Business Cost Ratio: Empirical Justification
+**Current assumption:** FN cost = 10 × FP cost
 
-As a business enhancement, we extend to a three-zone lending strategy:
-High-risk (P ≥ τ_high): Automatic Rejection
-Medium-risk (τ_low < P < τ_high): Manual Underwriting Review
-Low-risk (P ≤ τ_low): Automatic Approval
+**Questions:**
+- Should we derive this ratio empirically from data?
+  ```python
+  avg_principal = data['LIMIT_BAL'].mean()  # ~$167k
+  avg_interest = principal × monthly_rate   # ~$3.3k (assuming 2%)
+  cost_ratio = principal / interest ≈ 50:1
+  ```
+- Is 10:1 too conservative? Should we use 50:1 based on actual credit limits?
+- How sensitive are results to this ratio (sensitivity analysis needed)?
 
-8. Some bonus for revisiting Project 1:
-Is your chosen portfolio better than LASSOCV or RidgeCV using new data?
+---
 
-Can we just resubmit the first project with update or we have to redo the first project with this requirement in order to get the bonus?
+## 4. Model Selection Criterion: AUC vs Business Cost
+**Current approach:**
+1. GridSearchCV optimizes AUC for each model (Ridge, Logistic, SVM)
+2. Select best model by validation AUC
+3. Optimize threshold using business cost
+
+**Alternative:** Select model directly by minimum validation cost?
+
+**Question:** Should statistical performance (AUC) and business objective (cost) be optimized separately, or jointly?
+
+---
+
+## 5. Feature Engineering: Validation & Selection
+**8 engineered features created:**
+- Temporal slopes (bill_slope, pay_slope, utilization_trend)
+- Delinquency metrics (max_delinquency, delinquency_persistence)
+- Financial ratios (repayment_ratio, utilization_rate, repayment_stability)
+
+**Questions:**
+- Are these features sufficient, or should we engineer more?
+- Should we perform feature selection (e.g., remove correlated features)?
+- How to validate feature importance: coefficient analysis, permutation importance, or SHAP?
+- Should we check residual patterns by class (defaulter vs non-defaulter)?
+
+---
+
+## 6. Class Imbalance: Explicit vs Implicit Handling
+**Current approach:** `class_weight='balanced'` in Logistic Regression and SVM
+
+**Alternative approaches:**
+- SMOTE oversampling
+- Random undersampling
+- Threshold moving (already doing this)
+
+**Questions:**
+- Is `class_weight='balanced'` sufficient, or should we compare resampling methods?
+- Which metric should we use to compare: AUC, business cost, or F1?
+- Could resampling introduce data leakage or overfitting?
+
+---
+
+## 7. Three-Zone Decision System: Evaluation Framework
+**Proposed strategy:**
+- High-risk (P ≥ τ_high): **Auto-reject**
+- Medium-risk (τ_low < P < τ_high): **Manual underwriting**
+- Low-risk (P ≤ τ_low): **Auto-approve**
+
+**Evaluation challenges:**
+- **Model performance:** Per-zone calibration (predicted vs actual default rate)
+- **Business efficiency:** Total cost = FN cost + FP cost + manual review cost
+- **Operational metrics:** Automation rate vs manual workload (feasibility constraint)
+
+**Questions:**
+- How to optimize (τ_high, τ_low) jointly? Grid search with cost function + manual capacity constraint?
+- Should we report per-zone precision/recall, or total business cost?
+- How to compare three-zone system to single-threshold baseline?
+
+**Proposed KPIs:**
+| Metric | Definition | Target |
+|--------|------------|--------|
+| Total Cost | FN×10 + FP×1 + Manual×0.5 | Minimize |
+| Automation Rate | (Auto-decisions) / Total | >70% |
+| Manual Workload | Manual reviews / Total | <30% |
+| Low-zone Default Rate | Actual defaults in auto-approve | <10% |
+| High-zone Precision | True positives in auto-reject | >80% |
+
+---
+
+## 8. Bonus Question: Project 1 Revisitation
+**Requirement:** Compare your portfolio selection to LassoCV/RidgeCV on new test data
+
+**Questions:**
+- Can we update our original Project 1 submission with new test results, or must we redo the entire analysis?
+- Should we retrain on combined old+new data, or keep original model and only test on new data?
+- What constitutes "better": higher Sharpe ratio, lower volatility, or out-of-sample R²?
+
+---
+
+## Summary: Key Decisions Needed
+1. ✅ **LinearSVC vs SVC:** Confirm LinearSVC is acceptable
+2. ✅ **Cost optimization:** Post-hoc threshold tuning (Option A) preferred?
+3. ⚠️ **Cost ratio:** Need empirical justification (50:1 vs 10:1)
+4. ✅ **Model selection:** AUC → threshold tuning approach confirmed?
+5. ⚠️ **Feature validation:** Need feature selection analysis
+6. ⚠️ **Imbalance handling:** Should we compare resampling methods?
+7. ⚠️ **Three-zone evaluation:** Need optimization framework clarification
+8. ❓ **Bonus logistics:** Resubmit vs redo Project 1
+
+---
