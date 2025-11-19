@@ -106,10 +106,7 @@
 **Requirement:** Compare your portfolio selection to LassoCV/RidgeCV on new test data
 
 **Questions:**
-- Can we update our original Project 1 submission with new test results, or must we redo the entire analysis?
-- Should we retrain on combined old+new data, or keep original model and only test on new data?
-- What constitutes "better": higher Sharpe ratio, lower volatility, or out-of-sample R²?
-
+- Can we update our original Project 1 submission with new test results, or must we redo the entire analysis? Or just re-explain what to do with this.
 ---
 
 ## Summary: Key Decisions Needed
