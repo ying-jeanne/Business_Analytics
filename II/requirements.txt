@@ -5,3 +5,5 @@ lightgbm
 scikit-learn
 statsmodels
 seaborn
+flask
+shap

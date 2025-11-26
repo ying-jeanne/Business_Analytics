@@ -65,15 +65,22 @@ Engineered 8 temporal features to capture financial behavior, including:
 *   **Global Importance:** Confirmed that **Payment History** (`PAY_1`, `MAX_DELINQUENCY`) drives decisions, not Demographics.
 *   **Local Explanations:** Waterfall plots provide reason codes for every individual decision (e.g., "Approved because repayment ratio > 10%").
 
-## 📂 Project Structure
+## Run the App
+Install dependencies:
+```bash
+pip install -r requirements.txt
+```
 
+Start the Flask server:
+```bash
+python app.py
 ```
-II/
-├── credit_default.ipynb       # Main analysis notebook (End-to-End pipeline)
-├── data/
-│   └── UCI_Credit_Card.csv   # Dataset (Limits <= $200k)
-├── report/
-│   └── ba_group_project.pdf  # Final Business Report
-├── requirements.txt          # Python dependencies
-└── README.md                 # This file
-```
+
+View in Browser
+Open your web browser and go to:
+[http://127.0.0.1:5000](http://127.0.0.1:5000)
+
+### App Features
+- **Customer Selection:** Browse the top 500 riskiest customers (or any other sorted by score).
+- **Prediction Details:** See the Risk Score, True Label, and Status (TP, TN, FP, FN).
+- **Interactive Plot:** View the SHAP waterfall plot generated on-the-fly.

@@ -1,0 +1,129 @@
+import pandas as pd
+import numpy as np
+from flask import Flask, render_template, jsonify
+import os
+
+app = Flask(__name__)
+
+# Load data
+DATA_FILE = 'data/webapp_data.csv'
+df = None
+
+def load_data():
+    global df
+    if os.path.exists(DATA_FILE):
+        df = pd.read_csv(DATA_FILE)
+        # Convert ID to integer to avoid float display
+        df['ID'] = df['ID'].astype(int)
+        print(f"Loaded {len(df)} records from {DATA_FILE}")
+    else:
+        print(f"Warning: {DATA_FILE} not found. Please run the data generation script.")
+
+load_data()
+
+@app.route('/')
+def index():
+    if df is None:
+        return "Error: webapp_data.csv not found. Please generate it first."
+    
+    # Create a list of customers for the dropdown
+    # We'll show ID, True Label, and Risk Score
+    customers = []
+    for idx, row in df.iterrows():
+        customers.append({
+            'id': row['ID'],
+            'label': int(row['True_Label']),
+            'score': round(row['Prediction_Score'], 3)
+        })
+    
+    # Sort by score descending (riskiest first) for easier browsing
+    customers.sort(key=lambda x: x['score'], reverse=True)
+    
+    return render_template('index.html', customers=customers[:500]) # Limit to 500 for performance
+
+@app.route('/details/<int:customer_id>')
+def get_details(customer_id):
+    if df is None:
+        return jsonify({'error': 'Data not loaded'})
+    
+    customer = df[df['ID'] == customer_id]
+    if customer.empty:
+        return jsonify({'error': 'Customer not found'})
+    
+    row = customer.iloc[0]
+    
+    # Determine Status (TP, TN, FP, FN)
+    threshold = 0.13
+    pred = 1 if row['Prediction_Score'] >= threshold else 0
+    true = int(row['True_Label'])
+    
+    if true == 1 and pred == 1: status = "True Positive (Correct Default)"
+    elif true == 0 and pred == 0: status = "True Negative (Correct Non-Default)"
+    elif true == 0 and pred == 1: status = "False Positive (False Alarm)"
+    elif true == 1 and pred == 0: status = "False Negative (Missed Default)"
+    
+    return jsonify({
+        'id': int(row['ID']),
+        'true_label': true,
+        'prediction_score': float(row['Prediction_Score']),
+        'status': status,
+        'threshold': threshold
+    })
+
+@app.route('/plot/<int:customer_id>')
+def get_plot(customer_id):
+    if df is None:
+        return jsonify({'error': 'Data not loaded'})
+        
+    customer = df[df['ID'] == customer_id]
+    if customer.empty:
+        return jsonify({'error': 'Customer not found'})
+    
+    row = customer.iloc[0]
+    
+    # Extract SHAP values and feature values
+    shap_cols = [c for c in df.columns if c.startswith('SHAP_')]
+    feature_cols = [c.replace('SHAP_', '') for c in shap_cols]
+    
+    shap_values = row[shap_cols].values.astype(float)
+    feature_values = row[feature_cols].values
+    base_value = row['Base_Value']
+    
+    # Create data for waterfall chart
+    # Sort by absolute SHAP value and take top 10
+    indices = np.argsort(np.abs(shap_values))[::-1][:10]
+    
+    top_features = [feature_cols[i] for i in indices]
+    top_shap_values = [shap_values[i] for i in indices]
+    top_feature_values = [feature_values[i] for i in indices]
+    
+    # Build waterfall data
+    labels = ['Base Value']
+    values = [base_value]
+    colors = ['lightgray']
+    text_labels = [f'{base_value:.3f}']
+    
+    cumulative = base_value
+    for feat, shap_val, feat_val in zip(top_features, top_shap_values, top_feature_values):
+        labels.append(f'{feat}={feat_val:.2f}')
+        values.append(shap_val)
+        colors.append('#ff6b6b' if shap_val > 0 else '#4ecdc4')
+        cumulative += shap_val
+        text_labels.append(f'{shap_val:+.3f}')
+    
+    labels.append('Final score - f(x)')
+    values.append(cumulative)
+    colors.append('lightgray')
+    text_labels.append(f'{cumulative:.3f}')
+    
+    return jsonify({
+        'labels': labels,
+        'values': values,
+        'colors': colors,
+        'text': text_labels,
+        'base_value': float(base_value),
+        'final_value': float(cumulative)
+    })
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHAP Analysis Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .card {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        #shap-plot {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .status-badge {
+            font-size: 1.1em;
+            padding: 10px;
+            border-radius: 5px;
+            color: white;
+        }
+
+        .bg-tp {
+            background-color: #28a745;
+        }
+
+        /* Green */
+        .bg-tn {
+            background-color: #17a2b8;
+        }
+
+        /* Blue */
+        .bg-fp {
+            background-color: #ffc107;
+            color: black;
+        }
+
+        /* Yellow */
+        .bg-fn {
+            background-color: #dc3545;
+        }
+
+        /* Red */
+    </style>
+</head>
+
+<body>
+    <div class="container py-5">
+        <h1 class="mb-4 text-center">Credit Default Prediction - SHAP Analysis</h1>
+
+        <div class="row mb-4">
+            <div class="col-md-6 offset-md-3">
+                <div class="card p-4">
+                    <label for="customer-select" class="form-label"><strong>Select Customer (Top 500
+                            Riskiest):</strong></label>
+                    <select id="customer-select" class="form-select">
+                        <option value="" selected disabled>Choose a customer...</option>
+                        {% for c in customers %}
+                        <option value="{{ c.id }}">
+                            ID: {{ c.id }} | Score: {{ c.score }} | True: {{ c.label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div id="result-area" class="d-none">
+            <!-- Prediction Details and Interpretation Guide Row -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-header bg-dark text-white">Prediction Details</div>
+                        <div class="card-body">
+                            <h5 class="card-title">Customer ID: <span id="disp-id"></span></h5>
+                            <p class="card-text">
+                                <strong>Risk Score:</strong> <span id="disp-score"></span><br>
+                                <strong>Threshold:</strong> <span id="disp-threshold"></span><br>
+                                <strong>True Label:</strong> <span id="disp-true"></span>
+                            </p>
+                            <div id="status-badge" class="status-badge text-center"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-header bg-secondary text-white">Interpretation Guide</div>
+                        <div class="card-body small">
+                            <ul>
+                                <li><strong>Red bars:</strong> Features pushing risk HIGHER (towards default).</li>
+                                <li><strong>Blue bars:</strong> Features pushing risk LOWER (towards safety).</li>
+                                <li><strong>E[f(x)]:</strong> Average risk score of the population.</li>
+                                <li><strong>f(x):</strong> Final risk score for this customer.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SHAP Waterfall Plot Row (Full Width) -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">SHAP Waterfall Plot</div>
+                        <div class="card-body">
+                            <div id="loading" class="spinner-border text-primary d-none" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <div id="shap-plot"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('customer-select').addEventListener('change', function () {
+            const customerId = parseInt(this.value);  // Convert to integer
+            if (!customerId) return;
+
+            // Show loading
+            document.getElementById('result-area').classList.remove('d-none');
+            document.getElementById('loading').classList.remove('d-none');
+
+            // Fetch Details
+            fetch(`/details/${customerId}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('disp-id').textContent = data.id;
+                    document.getElementById('disp-score').textContent = data.prediction_score.toFixed(3);
+                    document.getElementById('disp-threshold').textContent = data.threshold;
+                    document.getElementById('disp-true').textContent = data.true_label;
+
+                    const badge = document.getElementById('status-badge');
+                    badge.textContent = data.status;
+
+                    // Set color class
+                    badge.className = 'status-badge text-center'; // reset
+                    if (data.status.includes('True Positive')) badge.classList.add('bg-tp');
+                    else if (data.status.includes('True Negative')) badge.classList.add('bg-tn');
+                    else if (data.status.includes('False Positive')) badge.classList.add('bg-fp');
+                    else if (data.status.includes('False Negative')) badge.classList.add('bg-fn');
+                });
+
+            // Fetch and render plot
+            document.getElementById('loading').classList.remove('d-none');
+            fetch(`/plot/${customerId}`)
+                .then(response => response.json())
+                .then(plotData => {
+                    document.getElementById('loading').classList.add('d-none');
+
+                    // Create waterfall chart
+                    const trace = {
+                        type: 'waterfall',
+                        orientation: 'h',
+                        y: plotData.labels,
+                        x: plotData.values,
+                        text: plotData.text,
+                        textposition: 'outside',
+                        connector: {
+                            line: {
+                                color: 'rgb(63, 63, 63)'
+                            }
+                        },
+                        decreasing: { marker: { color: '#4ecdc4' } },
+                        increasing: { marker: { color: '#ff6b6b' } },
+                        totals: { marker: { color: 'lightgray' } }
+                    };
+
+                    const layout = {
+                        title: 'SHAP Waterfall Plot',
+                        xaxis: {
+                            title: 'SHAP Value'
+                        },
+                        yaxis: {
+                            title: {
+                                text: 'Features',
+                                standoff: 20
+                            },
+                            automargin: true
+                        },
+                        height: 500,
+                        margin: {
+                            l: 200
+                        }
+                    };
+
+                    Plotly.newPlot('shap-plot', [trace], layout, { responsive: true });
+                })
+                .catch(error => {
+                    document.getElementById('loading').classList.add('d-none');
+                    console.error('Error loading plot:', error);
+                });
+        });
+    </script>
+</body>
+
+</html>
