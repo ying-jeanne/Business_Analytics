@@ -7,8 +7,6 @@ app = Flask(__name__)
 
 import pathlib
 # Load data
-df = None
-
 def load_data(data_file=None):
     if data_file is None:
         data_file = os.path.join('data', 'webapp_data.csv')
@@ -20,6 +18,8 @@ def load_data(data_file=None):
     else:
         print(f"Warning: {data_file} not found. Please run the data generation script.")
         return None
+
+df = load_data()
 
 @app.route('/')
 def index():
@@ -177,5 +177,4 @@ def get_plot(customer_id):
     })
 
 if __name__ == '__main__':
-    load_data()
     app.run(debug=True, port=5000)
