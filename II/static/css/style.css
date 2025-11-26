@@ -1,3 +1,14 @@
+/* SHAP plot horizontal scroll */
+.shap-scroll-x {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+#shap-plot {
+    min-width: 900px;
+    width: 100%;
+    display: block;
+}
 /* Clean Slate Design System - Based on Reference */
 
 /* Import Google Fonts */
