@@ -68,7 +68,29 @@ def index():
         customers.sort(key=lambda x: x['score'], reverse=True)
         customers = customers[:500]  # Limit to 500 for performance
     
-    return render_template('index.html', customers=customers, current_filter=filter_type)
+    # Calculate overall statistics for all customers
+    all_customers_count = len(df)
+    tp_count = sum(1 for c in [{'id': row['ID'], 'label': int(row['True_Label']), 'score': round(row['Prediction_Score'], 3), 'status': ('TP' if (int(row['True_Label']) == 1 and row['Prediction_Score'] >= threshold) else ('TN' if (int(row['True_Label']) == 0 and row['Prediction_Score'] < threshold) else ('FP' if (int(row['True_Label']) == 0 and row['Prediction_Score'] >= threshold) else 'FN')))} for idx, row in df.iterrows()] if c['status'] == 'TP')
+    tn_count = sum(1 for c in [{'id': row['ID'], 'label': int(row['True_Label']), 'score': round(row['Prediction_Score'], 3), 'status': ('TP' if (int(row['True_Label']) == 1 and row['Prediction_Score'] >= threshold) else ('TN' if (int(row['True_Label']) == 0 and row['Prediction_Score'] < threshold) else ('FP' if (int(row['True_Label']) == 0 and row['Prediction_Score'] >= threshold) else 'FN')))} for idx, row in df.iterrows()] if c['status'] == 'TN')
+    fp_count = sum(1 for c in [{'id': row['ID'], 'label': int(row['True_Label']), 'score': round(row['Prediction_Score'], 3), 'status': ('TP' if (int(row['True_Label']) == 1 and row['Prediction_Score'] >= threshold) else ('TN' if (int(row['True_Label']) == 0 and row['Prediction_Score'] < threshold) else ('FP' if (int(row['True_Label']) == 0 and row['Prediction_Score'] >= threshold) else 'FN')))} for idx, row in df.iterrows()] if c['status'] == 'FP')
+    fn_count = sum(1 for c in [{'id': row['ID'], 'label': int(row['True_Label']), 'score': round(row['Prediction_Score'], 3), 'status': ('TP' if (int(row['True_Label']) == 1 and row['Prediction_Score'] >= threshold) else ('TN' if (int(row['True_Label']) == 0 and row['Prediction_Score'] < threshold) else ('FP' if (int(row['True_Label']) == 0 and row['Prediction_Score'] >= threshold) else 'FN')))} for idx, row in df.iterrows()] if c['status'] == 'FN')
+    
+    accuracy = (tp_count + tn_count) / all_customers_count if all_customers_count > 0 else 0
+    precision = tp_count / (tp_count + fp_count) if (tp_count + fp_count) > 0 else 0
+    recall = tp_count / (tp_count + fn_count) if (tp_count + fn_count) > 0 else 0
+    
+    stats = {
+        'total': all_customers_count,
+        'accuracy': round(accuracy * 100, 2),
+        'precision': round(precision * 100, 2),
+        'recall': round(recall * 100, 2),
+        'tp': tp_count,
+        'tn': tn_count,
+        'fp': fp_count,
+        'fn': fn_count
+    }
+    
+    return render_template('index.html', customers=customers, current_filter=filter_type, stats=stats)
 
 @app.route('/details/<int:customer_id>')
 def get_details(customer_id):

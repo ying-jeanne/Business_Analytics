@@ -64,6 +64,96 @@ body {
     padding: 2rem 1rem;
 }
 
+/* Header Section */
+.project-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.project-description {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    margin-top: 0.5rem;
+}
+
+/* Summary Statistics Card */
+.stats-card {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.05) 0%, rgba(129, 140, 248, 0.05) 100%);
+    border-color: rgba(56, 189, 248, 0.2);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+}
+
+.stat-item {
+    text-align: center;
+    padding: 0.75rem;
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.02);
+    transition: all var(--transition-normal);
+}
+
+.stat-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-2px);
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.stat-tp {
+    border-left: 3px solid var(--color-tp);
+}
+
+.stat-tn {
+    border-left: 3px solid var(--color-tn);
+}
+
+.stat-fp {
+    border-left: 3px solid var(--color-fp);
+}
+
+.stat-fn {
+    border-left: 3px solid var(--color-fn);
+}
+
+/* Footer */
+.project-footer {
+    margin-top: 3rem;
+    padding: 2rem 0;
+    text-align: center;
+    border-top: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.footer-meta {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+
 /* Typography */
 h1 {
     font-size: 2.5rem;
