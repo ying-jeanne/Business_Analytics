@@ -114,8 +114,8 @@ Comprehensive data quality checks were performed:
     \item ID Uniqueness: Verified each customer has unique identifier
     \item Categorical Consolidation:
     \begin{itemize}[label=-]
-        \item EDUCATION: Merged invalid categories (0, 5, 6) into "others" (category 4)
-        \item MARRIAGE: Merged category 0 into "others" (category 3)
+        \item EDUCATION: Merged invalid categories (0, 5, 6) into 'others' (category 4)
+        \item MARRIAGE: Merged category 0 into 'others' (category 3)
         \item PAY\_STATUS: Renamed PAY\_0 to PAY\_1 for temporal consistency
     \end{itemize}
     \item Range Validation: Checked age bounds (0-90 years), bill amounts (allowing negative as valid bank credit), payment amounts (non-negative confirmed)
@@ -216,89 +216,20 @@ We select the \textbf{LightGBM Cost-Optimal (0.13)} strategy for production, as 
 
 \subsection{SHAP Methodology}
 
-SHAP (SHapley Additive exPlanations)\footnote{Lundberg, S.M., \& Lee, S.I. (2017). A unified approach to interpreting model predictions. \textit{Advances in Neural Information Processing Systems}, 30.} provides a unified framework for interpreting blackbox models by attributing each prediction to individual feature contributions. Based on cooperative game theory, SHAP values represent each feature's marginal contribution to the prediction when averaged over all possible feature coalitions, satisfying desirable properties: local accuracy, missingness, and consistency.
-
-For tree-based models, TreeSHAP computes exact Shapley values efficiently by exploiting the tree structure. Each SHAP value $\phi_i$ quantifies feature $i$'s impact: positive values push toward default prediction, negative values push toward non-default, with magnitude indicating importance.
-
-\emph{Why SHAP for Blackbox Models:} While glassbox models (Logistic Regression) offer inherent interpretability through coefficients, their performance limitation (AUC 0.7448 vs 0.7642) justifies using a blackbox model augmented with SHAP analysis. This provides "best of both worlds": superior predictive power with recovered interpretability for regulatory compliance (e.g., GDPR's "right to explanation") and business trust.
+We employ SHAP (SHapley Additive exPlanations)\footnote{Lundberg, S.M., \& Lee, S.I. (2017). A unified approach to interpreting model predictions. \textit{Advances in Neural Information Processing Systems}, 30.} to interpret our blackbox LightGBM model. SHAP attributes each prediction to individual feature contributions based on cooperative game theory, ensuring consistent and locally accurate explanations. This approach combines the superior predictive power of tree-based models (AUC 0.7642) with the transparency required for regulatory compliance and business trust.
 
 \subsection{Global Feature Importance}
 
-Appendix \ref{app:shap} shows global feature importance ranked by mean absolute SHAP value across all validation samples (4,076 predictions).
+Appendix \ref{app:shap} details the global feature importance. The top 3 features (MAX\_DELINQUENCY, PAY\_1, DELINQUENCY\_PERSISTENCE) account for $\sim$40\% of total importance, confirming that payment behavior is the primary driver of default risk. Demographic features (Age, Sex, Education, Marriage) rank in the bottom half, contributing less than 6\% combined, which supports fair lending compliance.
 
-\emph{Top 5 Most Important Features:}
+\subsection{Local Explanations}
 
-\begin{table}[H]
-\centering
-\caption{Global Feature Importance from SHAP Analysis}
-\label{tab:shap_importance}
-\begin{tabular}{lll}
-\toprule
-\textbf{Rank} & \textbf{Feature} & \textbf{Mean |SHAP|} \\
-\midrule
-1 & MAX\_DELINQUENCY & 0.459 \\
-2 & PAY\_1 (Recent repayment status) & 0.257 \\
-3 & DELINQUENCY\_PERSISTENCE & 0.184 \\
-4 & LIMIT\_BAL (Credit limit) & 0.052 \\
-5 & PAY\_2 & 0.047 \\
-\bottomrule
-\end{tabular}
-\end{table}
+To demonstrate model transparency, we analyze four representative cases (True Positive, True Negative, False Positive, False Negative). These case studies, detailed in Appendix \ref{app:waterfall}, demonstrate how the model relies heavily on recent payment history (PAY\_1) and delinquency magnitude (MAX\_DELINQUENCY). By providing specific reasons for each prediction, we ensure the transparency needed for regulatory compliance.
 
-\emph{Key Insights:}
-
-\begin{itemize}
-    \item Payment History Dominates: The top 3 features (MAX\_DELINQUENCY, PAY\_1, DELINQUENCY\_PERSISTENCE) account for $\sim$70\% of total model importance, all capturing payment behavior patterns. This confirms behavioral data far outweighs demographics.
-
-    \item Recent History Matters Most: PAY\_1 (most recent month) has 5.4× higher importance than PAY\_2, indicating recency bias is critical. Customers with recent late payments are high-risk even with good historical records.
-
-    \item Demographic Features are Weak: Gender, Education, Marriage, and Age rank in bottom 30\%, suggesting credit behavior transcends demographic categories. This supports fair lending as the model relies minimally on protected attributes.
-
-    \item Engineered Features Add Value: DELINQUENCY\_PERSISTENCE (rank 3) and UTILIZATION\_RATE (rank 8) provide predictive power beyond raw payment status, validating our feature engineering effort.
-\end{itemize}
-
-\subsection{Local Case Studies}
-
-SHAP waterfall plots explain individual predictions by showing how each feature shifts from the base rate (25.6\% default probability) to the final prediction. Positive contributions (red) increase default risk, negative contributions (blue) decrease risk.
-
-We analyze four representative cases from the validation set (detailed waterfall plots in Appendix \ref{app:waterfall}):
-
-\textbf{Case 1: True Positive (Correctly Predicted Default)}
-\begin{itemize}
-    \item Actual: Default, Predicted: 0.89 (89\% default probability)
-    \item Model Decision: REJECT (correct)
-    \item Top Contributors: MAX\_DELINQUENCY=4 (+0.31), PAY\_1=2 (+0.25), \\DELINQUENCY\_PERSISTENCE=3 (+0.18)
-    \item Interpretation: Customer had 4 months maximum delay, 2-month recent delay, and 3 consecutive late payments. Strong behavioral signals correctly flagged high risk.
-\end{itemize}
-
-\textbf{Case 2: True Negative (Correctly Predicted Non-Default)}
-\begin{itemize}
-    \item Actual: Non-default, Predicted: 0.08 (8\% default probability)
-    \item Model Decision: APPROVE (correct)
-    \item Top Contributors: MAX\_DELINQUENCY=0 (-0.22), PAY\_1=-1 (-0.18), \\REPAYMENT\_RATIO=1.2 (-0.09)
-    \item Interpretation: Perfect payment history (no delays, paid in full recently), high repayment ratio. Model correctly identified low-risk customer.
-\end{itemize}
-
-\textbf{Case 3: False Positive (Wrongly Predicted Default)}
-\begin{itemize}
-    \item Actual: Non-default, Predicted: 0.72 (72\% default probability)
-    \item Model Decision: REJECT (incorrect - lost profit)
-    \item Top Contributors: MAX\_DELINQUENCY=3 (+0.28), PAY\_1=1 (+0.15), but REPAYMENT\_RATIO=0.95 (-0.12)
-    \item Interpretation: Customer had past delays but was actually reliable. Model was overly cautious due to historical delinquency. This represents an acceptable trade-off given the 5:1 cost ratio.
-\end{itemize}
-
-\textbf{Case 4: False Negative (Missed Default)}
-\begin{itemize}
-    \item Actual: Default, Predicted: 0.18 (18\% default probability)
-    \item Model Decision: APPROVE (incorrect - incurred loss)
-    \item Top Contributors: MAX\_DELINQUENCY=1 (moderate), PAY\_1=0 (-0.10), \\LIMIT\_BAL=300K (-0.08)
-    \item Interpretation: Subtle case with minimal delinquency history and high credit limit. Model underestimated risk. These rare cases (FN=174 out of 4,076) represent the hardest predictions and unavoidable errors at any reasonable threshold.
-\end{itemize}
-
-\emph{Business Value of Local Explanations:}
+\textbf{Business Value of Local Explanations:}
 
 \begin{enumerate}
-    \item Customer Communication: When rejecting an application, we can cite specific risk factors (e.g., "3 consecutive late payments in the past 6 months") rather than opaque "algorithmic decision"
+    \item Customer Communication: When rejecting an application, we can cite specific risk factors (e.g., '3 consecutive late payments in the past 6 months') rather than opaque 'algorithmic decision'
     \item Manual Review: Borderline cases (0.10-0.20 probability) can be escalated to human underwriters with SHAP explanations highlighting key risk/protective factors
     \item Model Debugging: Local explanations reveal when the model makes decisions for wrong reasons (e.g., overly relying on credit limit), guiding model improvements
     \item Regulatory Compliance: SHAP provides auditable rationale for each decision, satisfying fair lending regulations and GDPR Article 22
@@ -386,7 +317,7 @@ Based on the model's probability outputs, we recommend implementing a tiered app
 \emph{Monitoring and Maintenance:}
 
 \begin{itemize}
-    \item Monthly Metrics: Track approval rate (target: 35-45\%), default rate among approved (alert if $>$ 15\%), net profit (target: $>$ \$5M quarterly)
+    \item Monthly Metrics: Track approval rate (target: 35-45\%), default rate among approved (alert if $>$ 15%), net profit (target: $>$ \$5M quarterly)
     \item Quarterly Retraining: Retrain model with new data to capture changing customer behavior and economic conditions
     \item Feature Drift Detection: Monitor distribution shifts in top 5 SHAP features using KL-divergence
     \item Fairness Audits: Quarterly analysis of approval rates across demographics (gender, age groups) to ensure compliance with fair lending regulations
@@ -478,9 +409,67 @@ Ridge Regression & Glassbox & L2/MSE & 0.7372 \\
 \end{tabular}
 \end{table}
 
+\section{Cost vs Threshold Curves}\label{app:cost_curves}
+
+Figures below show how business cost and F1 loss vary with decision threshold for Logistic Regression and LightGBM models, respectively. These plots demonstrate the fundamental misalignment between traditional metrics (F1-score) and business objectives (minimizing net cost).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{../graphs/losses_logistic.png}
+\caption{Business Cost vs F1 Loss for Logistic Regression across different thresholds. The F1-optimal threshold (minimizing F1 loss) does not align with the cost-optimal threshold (minimizing business cost), resulting in 101\% worse financial performance.}
+\label{fig:losses_logistic}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{../graphs/losses_lightgbm.png}
+\caption{Business Cost vs F1 Loss for LightGBM across different thresholds. The divergence between F1-optimal and cost-optimal thresholds is even more pronounced, leading to 207\% financial improvement when using business-aligned optimization.}
+\label{fig:losses_lightgbm}
+\end{figure}
+
+\textbf{Key observations:}
+\begin{itemize}
+    \item \textbf{Metric Misalignment:} F1-optimal thresholds (0.57 for LR, 0.34 for LGBM) are significantly higher than cost-optimal thresholds (0.39 for LR, 0.13 for LGBM), demonstrating that traditional metrics fail to capture business economics
+    \item \textbf{Cost Function Shape:} Both models show U-shaped business cost curves, where too-low thresholds approve too many defaulters (high FN cost) and too-high thresholds reject too many good customers (low TN revenue)
+    \item \textbf{Asymmetric Trade-off:} The 5:1 cost ratio (default loss vs profit) drives the optimal point toward conservative lending, favoring lower approval rates to avoid costly false negatives
+    \item \textbf{Model Differences:} LightGBM achieves lower absolute business cost at its optimum (-650 vs -536 for LR), validating its superior performance for deployment
+\end{itemize}
+
+\section{Engineered Feature Descriptions}\label{app:engineered_features}
+
+Table \ref{tab:engineered_features} provides comprehensive descriptions of the 8 engineered features created to capture temporal trends and financial behavior patterns.
+
+\begin{table}[H]
+\centering
+\caption{Engineered Feature Descriptions}
+\label{tab:engineered_features}
+\small
+\begin{tabular}{lp{7cm}p{3cm}}
+\toprule
+\textbf{Feature} & \textbf{Description \& Calculation} & \textbf{Business Interpretation} \\
+\midrule
+BILL\_SLOPE & Trend of bill amounts over 6 months using OLS regression on (month, BILL\_AMT) pairs & Increasing debt signal; positive slope indicates growing debt \\
+\midrule
+PAY\_SLOPE & Trend of payment amounts over 6 months using OLS regression on (month, PAY\_AMT) pairs & Payment consistency; negative slope may indicate financial stress \\
+\midrule
+DELINQUENCY\_PERSISTENCE & Maximum consecutive months with late payments (PAY $\geq$ 1) & Chronic payment issues; higher values indicate persistent delinquency \\
+\midrule
+MAX\_DELINQUENCY & Maximum payment delay observed across 6 months (max of PAY\_1 to PAY\_6) & Worst-case behavior; captures severity of payment delays \\
+\midrule
+REPAYMENT\_RATIO & Total payments / Total bills over 6 months & Ability to pay; ratio $>$ 1 indicates paying down debt \\
+\midrule
+REPAYMENT\_STABILITY & Standard deviation of payment amounts over 6 months & Behavior consistency; high values indicate erratic payment patterns \\
+\midrule
+UTILIZATION\_RATE & Average (BILL\_AMT / LIMIT\_BAL) over 6 months & Credit usage intensity; high values indicate near-limit usage \\
+\midrule
+UTILIZATION\_TREND & Slope of utilization rate over 6 months using OLS regression & Debt accumulation; positive slope indicates increasing credit usage \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \section{Dataset Feature Descriptions}\label{app:feature_table}
 
-Table \ref{tab:features} provides comprehensive descriptions of all 23 original features in the UCI Credit Card Default Dataset.
+Table below provides comprehensive descriptions of all 23 original features in the UCI Credit Card Default Dataset.
 
 \begin{table}[H]
 \centering
@@ -528,64 +517,6 @@ PAY\_AMT6 & Payment made in April 2005 (NT dollars) & float64 \\
 \end{tabular}
 \end{table}
 
-\section{Engineered Feature Descriptions}\label{app:engineered_features}
-
-Table \ref{tab:engineered_features} provides comprehensive descriptions of the 8 engineered features created to capture temporal trends and financial behavior patterns.
-
-\begin{table}[H]
-\centering
-\caption{Engineered Feature Descriptions}
-\label{tab:engineered_features}
-\small
-\begin{tabular}{lp{7cm}p{3cm}}
-\toprule
-\textbf{Feature} & \textbf{Description \& Calculation} & \textbf{Business Interpretation} \\
-\midrule
-BILL\_SLOPE & Trend of bill amounts over 6 months using OLS regression on (month, BILL\_AMT) pairs & Increasing debt signal; positive slope indicates growing debt \\
-\midrule
-PAY\_SLOPE & Trend of payment amounts over 6 months using OLS regression on (month, PAY\_AMT) pairs & Payment consistency; negative slope may indicate financial stress \\
-\midrule
-DELINQUENCY\_PERSISTENCE & Maximum consecutive months with late payments (PAY $\geq$ 1) & Chronic payment issues; higher values indicate persistent delinquency \\
-\midrule
-MAX\_DELINQUENCY & Maximum payment delay observed across 6 months (max of PAY\_1 to PAY\_6) & Worst-case behavior; captures severity of payment delays \\
-\midrule
-REPAYMENT\_RATIO & Total payments / Total bills over 6 months & Ability to pay; ratio $>$ 1 indicates paying down debt \\
-\midrule
-REPAYMENT\_STABILITY & Standard deviation of payment amounts over 6 months & Behavior consistency; high values indicate erratic payment patterns \\
-\midrule
-UTILIZATION\_RATE & Average (BILL\_AMT / LIMIT\_BAL) over 6 months & Credit usage intensity; high values indicate near-limit usage \\
-\midrule
-UTILIZATION\_TREND & Slope of utilization rate over 6 months using OLS regression & Debt accumulation; positive slope indicates increasing credit usage \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\section{Cost vs Threshold Curves}\label{app:cost_curves}
-
-Figures \ref{fig:losses_logistic} and \ref{fig:losses_lightgbm} show how business cost and F1 loss vary with decision threshold for Logistic Regression and LightGBM models, respectively. These plots demonstrate the fundamental misalignment between traditional metrics (F1-score) and business objectives (minimizing net cost).
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.85\textwidth]{../graphs/losses_logistic.png}
-\caption{Business Cost vs F1 Loss for Logistic Regression across different thresholds. The F1-optimal threshold (minimizing F1 loss) does not align with the cost-optimal threshold (minimizing business cost), resulting in 101\% worse financial performance.}
-\label{fig:losses_logistic}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.85\textwidth]{../graphs/losses_lightgbm.png}
-\caption{Business Cost vs F1 Loss for LightGBM across different thresholds. The divergence between F1-optimal and cost-optimal thresholds is even more pronounced, leading to 207\% financial improvement when using business-aligned optimization.}
-\label{fig:losses_lightgbm}
-\end{figure}
-
-\textbf{Key observations:}
-\begin{itemize}
-    \item \textbf{Metric Misalignment:} F1-optimal thresholds (0.57 for LR, 0.34 for LGBM) are significantly higher than cost-optimal thresholds (0.39 for LR, 0.13 for LGBM), demonstrating that traditional metrics fail to capture business economics
-    \item \textbf{Cost Function Shape:} Both models show U-shaped business cost curves, where too-low thresholds approve too many defaulters (high FN cost) and too-high thresholds reject too many good customers (low TN revenue)
-    \item \textbf{Asymmetric Trade-off:} The 5:1 cost ratio (default loss vs profit) drives the optimal point toward conservative lending, favoring lower approval rates to avoid costly false negatives
-    \item \textbf{Model Differences:} LightGBM achieves lower absolute business cost at its optimum (-650 vs -536 for LR), validating its superior performance for deployment
-\end{itemize}
-
 \section{Threshold Strategy Comparison}\label{app:threshold_table}
 
 \begin{table}[H]
@@ -608,56 +539,122 @@ Net Cost (normalized) & -267 & -536 & -212 & -650 \\
 \end{tabular}
 \end{table}
 
+
+
 \section{SHAP Global Importance Plots}\label{app:shap}
 
-\textit{[Placeholder: Include SHAP summary plots from Section 9 of the notebook:}
-\begin{itemize}
-    \item \textit{Bar plot showing mean |SHAP| values for top 20 features}
-    \item \textit{Beeswarm plot showing feature value impact on predictions (color indicates high/low feature values, position indicates SHAP contribution)}
-\end{itemize}
+Figure \ref{fig:global_shap} displays the top 20 features ranked by their global importance (mean absolute SHAP value). This confirms that payment behavior (delinquency status and persistence) far outweighs demographic factors.
 
-\textit{These visualizations provide global interpretability, showing which features matter most and how feature values influence default predictions.]}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{../graphs/global_feature_shap_absolute.png}
+\caption{Global Feature Importance (Mean |SHAP| value). The model relies heavily on maximum delinquency and recent payment status.}
+\label{fig:global_shap}
+\end{figure}
+
+Figure \ref{fig:shap_impact} illustrates the directionality of feature impacts. For example, high values of \texttt{MAX\_DELINQUENCY} (red dots) have a strong positive SHAP value, pushing the prediction toward default.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{../graphs/feature_value_impact_shap.png}
+\caption{SHAP Summary Plot (Beeswarm). Red indicates high feature values, blue indicates low values. Positive SHAP values indicate higher risk of default.}
+\label{fig:shap_impact}
+\end{figure}
+
+\subsection{Detailed Feature Importance Ranking}
+
+\begin{table}[H]
+\centering
+\caption{Top 10 Features by Mean |SHAP| Value}
+\label{tab:shap_importance_appendix}
+\small
+\begin{tabular}{clc}
+\toprule
+\textbf{Rank} & \textbf{Feature} & \textbf{Mean |SHAP|} \\
+\midrule
+1 & MAX\_DELINQUENCY & 0.459 \\
+2 & PAY\_1 (Recent repayment status) & 0.257 \\
+3 & DELINQUENCY\_PERSISTENCE & 0.184 \\
+4 & BILL\_AMT1 & 0.131 \\
+5 & UTILIZATION\_RATE & 0.108 \\
+6 & PAY\_AMT2 & 0.108 \\
+7 & PAY\_AMT3 & 0.089 \\
+8 & LIMIT\_BAL & 0.082 \\
+9 & REPAYMENT\_RATIO & 0.078 \\
+10 & UTILIZATION\_TREND & 0.074 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \section{SHAP Waterfall Plots for Local Explanations}\label{app:waterfall}
 
-\textit{[Placeholder: Include 4 waterfall plots from Section 9 showing local SHAP explanations:}
-\begin{enumerate}
-    \item \textit{True Positive: Correctly predicted default (high-risk customer properly rejected)}
-    \item \textit{True Negative: Correctly predicted non-default (low-risk customer properly approved)}
-    \item \textit{False Positive: Good customer incorrectly rejected (conservative error)}
-    \item \textit{False Negative: Defaulter incorrectly approved (costly error)}
-\end{enumerate}
+The following waterfall plots demonstrate how the model arrives at individual predictions by summing the base value (average log-odds) and feature contributions.
 
-\textit{Each waterfall shows how features push from base rate (25.6\%) to final prediction, with arrows indicating contribution magnitude and direction.]}
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.48\textwidth}
+    \includegraphics[width=\textwidth]{../graphs/true_positive_shap.png}
+    \caption{True Positive: Correctly predicted default.}
+    \label{fig:tp_shap}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.48\textwidth}
+    \includegraphics[width=\textwidth]{../graphs/true_negative_shap.png}
+    \caption{True Negative: Correctly predicted non-default.}
+    \label{fig:tn_shap}
+\end{subfigure}
+\caption{Local Explanations for Correct Predictions}
+\end{figure}
+
+\noindent\textbf{True Positive (High Risk):} Predicted 2.494. Driven by \texttt{MAX\_DELINQUENCY=2} (+0.94) and \texttt{PAY\_1=2} (+1.19). Strong behavioral signals (2-month delay, recent delinquency) correctly flagged high risk.
+
+\vspace{0.5em}
+
+\noindent\textbf{True Negative (Low Risk):} Predicted -2.89. Driven by \texttt{MAX\_DELINQUENCY=0} (-0.31) and \texttt{UTILIZATION\_RATE=0.413} (-0.28). Perfect payment history and moderate credit usage (41.3\%) pushed risk score significantly down.
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.48\textwidth}
+    \includegraphics[width=\textwidth]{../graphs/false_positive_shap.png}
+    \caption{False Positive: Good customer rejected.}
+    \label{fig:fp_shap}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.48\textwidth}
+    \includegraphics[width=\textwidth]{../graphs/false_negative_shap.png}
+    \caption{False Negative: Defaulter approved.}
+    \label{fig:fn_shap}
+\end{subfigure}
+\caption{Local Explanations for Incorrect Predictions}
+\end{figure}
+
+\noindent\textbf{False Positive (Conservative Error):} Predicted 0.979. Driven by \texttt{MAX\_DELINQUENCY=2} (+0.91) and \texttt{PAY\_1=2} (+1.02). Recent 2-month delay combined with historical delinquency triggered an extreme risk alert. The customer likely cured this delinquency, but the model penalized the recent instability heavily.
+
+\vspace{0.5em}
+
+\noindent\textbf{False Negative (Costly Error):} Predicted -2.648. Driven by \texttt{MAX\_DELINQUENCY=0} (-0.33) and \texttt{REPAYMENT\_RATIO=0.048} (+0.08). The model was misled by the perfect delinquency history (\texttt{MAX\_DELINQUENCY=0}), which strongly reduced the risk score. While the critically low repayment ratio (4.8\%) was correctly flagged as a risk factor (+0.08), its impact was insufficient to outweigh the clean history, resulting in a missed default.
 
 \section{Detailed Confusion Matrices and Threshold Analysis}\label{app:matrices}
 
-\textit{[Placeholder: Additional tables showing:}
-\begin{itemize}
-    \item \textit{Confusion matrices at multiple thresholds (0.05, 0.10, 0.13, 0.20, 0.34)}
-    \item \textit{Precision-Recall curves for all five models}
-    \item \textit{ROC curves comparing glassbox vs blackbox performance}
-    \item \textit{Threshold sensitivity analysis: how approval rate, default catch rate, and profit vary with threshold $\in [0.05, 0.50]$}
-\end{itemize}\textit{]}
+Table below presents the confusion matrices for our best model (LightGBM CE) at both F1-optimal and Cost-optimal thresholds, illustrating the trade-off between precision and recall.
 
-\section{Feature Engineering Details}\label{app:features}
-
-\textit{[Placeholder: Include:}
-\begin{itemize}
-    \item \textit{Histograms of engineered features (BILL\_SLOPE, PAY\_SLOPE, etc.) showing distributions}
-    \item \textit{Correlation matrix of top 10 features to identify multicollinearity}
-    \item \textit{Feature importance from LightGBM built-in gain metric (comparison with SHAP)}
-\end{itemize}\textit{]}
-
-\section{Hyperparameter Tuning Results}\label{app:hyperparams}
-
-\textit{[Placeholder: Tables showing GridSearchCV results:}
-\begin{itemize}
-    \item \textit{Logistic Regression: C values and class\_weight effects on validation AUC}
-    \item \textit{Linear SVM: C values and class\_weight effects}
-    \item \textit{Ridge Regression: Alpha values vs validation MSE}
-\end{itemize}
-
-\textit{These demonstrate that class balancing (class\_weight='balanced') improves AUC by 0.01-0.02 points for linear models, and C=10-100 regularization works best.]}
-
+\begin{table}[H]
+\centering
+\caption{Confusion Matrices for LightGBM (CE)}
+\label{tab:confusion_matrices}
+\begin{tabular}{lcc}
+\toprule
+& \textbf{F1-Optimal (0.34)} & \textbf{Cost-Optimal (0.13)} \\
+\midrule
+\textbf{True Negatives (TN)} & 2567 & 1475 \\
+\textbf{False Positives (FP)} & 465 & 1557 \\
+\textbf{False Negatives (FN)} & 471 & 165 \\
+\textbf{True Positives (TP)} & 573 & 879 \\
+\midrule
+\textbf{Precision} & 0.55 & 0.36 \\
+\textbf{Recall} & 0.55 & 0.84 \\
+\textbf{F1-Score} & 0.55 & 0.51 \\
+\bottomrule
+\end{tabular}
+\end{table}
 \end{document}
