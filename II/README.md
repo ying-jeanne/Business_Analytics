@@ -29,7 +29,8 @@ The entire analysis is contained within a single Jupyter Notebook.
 ### The Business Problem
 Financial institutions face a critical trade-off:
 - **False Negatives (Costly):** Approving a defaulter leads to significant loss (Principal + Interest).
-- **False Positives (Opportunity Cost):** Rejecting a good customer means lost profit.
+- **True Positive:** (Profitable) Approving a good customer generates profit.
+- **Net Cash Flow Calculation:** Net cash flow is calculated as total profit from approved good customers minus total loss from approved defaulters. Rejected customers do not affect net cash flow.
 
 Traditional metrics like Accuracy or F1-Score treat these errors equally, which is misaligned with business reality.
 
@@ -65,22 +66,21 @@ Engineered 8 temporal features to capture financial behavior, including:
 *   **Global Importance:** Confirmed that **Payment History** (`PAY_1`, `MAX_DELINQUENCY`) drives decisions, not Demographics.
 *   **Local Explanations:** Waterfall plots provide reason codes for every individual decision (e.g., "Approved because repayment ratio > 10%").
 
-## Run the App
-Install dependencies:
-```bash
-pip install -r requirements.txt
-```
+## 🖥️ SHAP Webapp Dashboard (Local)
 
-Start the Flask server:
-```bash
-python app.py
-```
+To run the interactive SHAP dashboard locally:
 
-View in Browser
-Open your web browser and go to:
-[http://127.0.0.1:5000](http://127.0.0.1:5000)
+1. **Install dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-### App Features
-- **Customer Selection:** Browse the top 500 riskiest customers (or any other sorted by score).
-- **Prediction Details:** See the Risk Score, True Label, and Status (TP, TN, FP, FN).
-- **Interactive Plot:** View the SHAP waterfall plot generated on-the-fly.
+2. **Start the Flask server:**
+    ```bash
+    python app.py
+    ```
+
+3. **Open your browser:**  
+   Go to [http://127.0.0.1:5000](http://127.0.0.1:5000)
+
+The dashboard allows you to select customers, view prediction details, and interactively explore SHAP waterfall plots for model interpretability.
