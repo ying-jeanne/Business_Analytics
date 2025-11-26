@@ -5,21 +5,21 @@ import os
 
 app = Flask(__name__)
 
+import pathlib
 # Load data
-DATA_FILE = 'data/webapp_data.csv'
 df = None
 
-def load_data():
-    global df
-    if os.path.exists(DATA_FILE):
-        df = pd.read_csv(DATA_FILE)
-        # Convert ID to integer to avoid float display
+def load_data(data_file=None):
+    if data_file is None:
+        data_file = os.path.join(pathlib.Path(__file__).parent.parent.resolve(), 'II', 'data', 'webapp_data.csv')
+    if os.path.exists(data_file):
+        df = pd.read_csv(data_file)
         df['ID'] = df['ID'].astype(int)
-        print(f"Loaded {len(df)} records from {DATA_FILE}")
+        print(f"Loaded {len(df)} records from {data_file}")
+        return df
     else:
-        print(f"Warning: {DATA_FILE} not found. Please run the data generation script.")
-
-load_data()
+        print(f"Warning: {data_file} not found. Please run the data generation script.")
+        return None
 
 @app.route('/')
 def index():
@@ -94,7 +94,7 @@ def index():
 
 @app.route('/details/<int:customer_id>')
 def get_details(customer_id):
-    if df is None:
+    if df is None: 
         return jsonify({'error': 'Data not loaded'})
     
     customer = df[df['ID'] == customer_id]
@@ -123,7 +123,7 @@ def get_details(customer_id):
 
 @app.route('/plot/<int:customer_id>')
 def get_plot(customer_id):
-    if df is None:
+    if df is None: 
         return jsonify({'error': 'Data not loaded'})
         
     customer = df[df['ID'] == customer_id]
@@ -177,4 +177,5 @@ def get_plot(customer_id):
     })
 
 if __name__ == '__main__':
+    load_data()
     app.run(debug=True, port=5000)
