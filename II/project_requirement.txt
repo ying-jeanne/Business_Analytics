@@ -1,0 +1,44 @@
+• Deadline: Nov. 26th (3 days after other projects’ deadline)
+• 2-3 days shall be enough:
+• Self-selected: you could choose an easy dataset (clean, not so large)
+• I will not be as harsh as Project 1
+• At most 6 pages.
+
+In Project 2
+• Train L2 loss —> Classiﬁcation as Regression
+• Regression prediction value,
+• Predicted probability of +1 via logistic function
+θi
+θi → exp(θi)
+1 + exp(θi)
+
+Project 2
+• Classiﬁcation project
+• The evaluation loss shall deviate from the misclassiﬁcation loss based on the context.
+• Interpretability and performance
+• You must implement at least one glassbox and at least one blackbox model.
+• Each model shall have two versions (train loss): L2 loss vs. other surrogate losses.
+• Compare all of them using validation AUC (not train loss) and make a decision.
+• For the chosen model, select the threshold that minimizes evaluation loss.
+Project 2
+• SHAP (Often used in Capstone project)
+• Even if you decide to use a glass box model, you still need to apply tree SHAP to one
+tree-based blackbox model.
+• The interpretability part must contain both local and global SHAP.
+
+Where to Find Dataset?
+• https://www.kaggle.com/
+• Find the datasets with high usability ratings!
+• Copying the examples from Kaggle will hurt your grade. (I usually ﬁnd this out when
+two teams have extremely similar mistakes/code).
+• https://beta.data.gov.sg/datasets
+• Find some Singapore-related datasets!
+• Be smart about choosing the dataset: avoid severe imbalance issues/large datasets/data
+cleaning/missing data…
+Common Issues Before
+• How are predictions used?
+• You could come up with your own setting. This leads to a customized loss.
+• You shall consider tweaking the threshold in label prediction.
+• Tweak it to generate the best customized loss.
+• If you obtain almost a perfect prediction, you should consider deleting some features to
+make the prediction harder.
