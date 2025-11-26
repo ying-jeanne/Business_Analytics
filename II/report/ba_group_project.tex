@@ -1,0 +1,116 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amssymb}
+\usepackage{geometry}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{subcaption}
+\usepackage[font=footnotesize,labelfont=footnotesize]{caption}  % Make figure/table captions smaller
+\usepackage[bottom,hang]{footmisc}  % Force footnotes to bottom of page
+\setlength{\footnotesep}{8pt}  % Space between footnotes
+\renewcommand{\footnoterule}{\vspace{-3pt}\hrule width 2in \vspace{8pt}}  % Shorter footnote rule
+\renewcommand{\footnotesize}{\scriptsize}  % Make footnotes smaller
+
+% For highlighting uncertain parts
+\newcommand{\uncertain}[1]{\textcolor{red}{[#1]}}
+\newcommand{\placeholder}[1]{\begin{center}\fbox{\parbox{0.8\textwidth}{\centering\textcolor{red}{[PLACEHOLDER: #1]}}}\end{center}}
+
+\lstset{
+  language=Python,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue}\bfseries,
+  commentstyle=\color{gray}\itshape,
+  stringstyle=\color{teal},
+  numberstyle=\tiny\color{gray},
+  numbers=left,
+  stepnumber=1,
+  numbersep=5pt,
+  backgroundcolor=\color{white},
+  frame=single,
+  breaklines=true,
+  showstringspaces=false,
+  tabsize=4,
+  emph={Model,quicksum,GRB,addVars,addConstr,optimize},
+  emphstyle=\color{violet}\bfseries,
+  morekeywords={as,from,import,def,return,if,else,try,except,for,in,range,print},
+  inputencoding=utf8,
+  extendedchars=true
+}
+
+\geometry{margin=0.9in}
+
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\footrulewidth}{0.4pt}
+\fancyfoot[R]{\thepage}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.5em}
+
+\setlist{itemsep=0.1em, topsep=0.1em, leftmargin=2em}
+
+\begin{document}
+
+%% ============================================
+%% TITLE PAGE
+%% ============================================
+\begin{titlepage}
+    \centering
+    \vspace*{1cm}
+    {\Huge\bfseries DBA5103 Operations Research and Analytics\\[0.5em]}
+    \vspace{0.5cm}
+    {\Large\bfseries Integrality Gap Analysis of TSP Formulations \par}
+    \vspace{1cm}
+    \includegraphics[width=0.30\textwidth]{nus_logo.png} \\[2em]
+
+    \vspace{1.5cm}
+    \begin{tabular}{|p{6cm}|p{4cm}|}
+    \hline
+    \textbf{Name} & \textbf{Student ID} \\ \hline
+    Tseng, Yung-Yi & A0318929M \\ \hline
+    Cho Eunsoo (Ashlyn) & A0246014R \\ \hline
+    Mark Hansen Nii Darku Dodoo & A0319136E \\ \hline
+    Zhao Qiya & A0331091R \\ \hline
+    Wang Ying & A0318271H \\ \hline
+    \end{tabular}
+
+    \vspace{0.5cm}
+    {\large National University of Singapore} \\
+    \vspace{0.3cm}
+
+    \vspace{0.1cm}
+    \href{https://github.com/qiyazhao062-a11y/DBA5103_TSP_Data}{Code repository}
+
+    \href{https://dba5103.pythonanywhere.com/}{Interactive results dashboard}
+
+    \vspace{0.3cm}
+    {\small Submission Date: \today} \\
+    \vfill
+\end{titlepage}
+\thispagestyle{fancy}
+
+%% ============================================
+%% ABSTRACT
+%% ============================================
+\section*{Abstract}
+This project investigates the integrality gap in the Traveling Salesman Problem to quantify the cost of convexity associated with linear programming relaxations. We perform a two-dimensional analysis that examines the interaction between three mathematical formulations of TSP (Miller-Tucker-Zemlin, Gavish-Graves, and Dantzig-Fulkerson-Johnson), along with the Assignment Problem as a baseline formulation, and four distinct distance matrix structures. By solving 120 instances ranging from random to highly structured networks, we assess how formulation tightness and data characteristics jointly determine the quality of the lower bound. Our findings confirm that while the Dantzig-Fulkerson-Johnson formulation consistently provides near-optimal bounds, weaker models such as the Miller-Tucker-Zemlin formulations exhibit large integrality gaps that are highly sensitive to data structure, particularly in clustered environments. These results offer a diagnostic framework for selecting appropriate solution methods based on network topology.
+
+
+%% ============================================
+%% APPENDIX
+%% ============================================
+\newpage
+\appendix
+
+\section{Mathematical Formulation of the Assignment Problem}\label{app:ap}
+
+\end{document}
