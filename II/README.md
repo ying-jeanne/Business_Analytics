@@ -34,7 +34,7 @@ Financial institutions face a critical trade-off:
 Traditional metrics like Accuracy or F1-Score treat these errors equally, which is misaligned with business reality.
 
 ### Our Solution
-1.  **Cost-Sensitive Learning:** We define a custom business loss function based on **Loss Given Default (50%)** and **Profit Margin (10%)**.
+1.  **Cost-Sensitive Learning:** We define a custom business loss function based on **net cash flow** (actual profit minus loss from defaults). We do not use opportunity cost in the loss calculation.
 2.  **Threshold Optimization:** Instead of the default 0.5 threshold, we find the optimal decision threshold (0.13) that minimizes net financial cost.
 3.  **Explainable AI:** We use **SHAP (SHapley Additive exPlanations)** to open the "black box" of our LightGBM model, ensuring regulatory compliance and trust.
 
