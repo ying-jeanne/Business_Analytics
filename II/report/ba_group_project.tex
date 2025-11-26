@@ -242,93 +242,32 @@ To demonstrate model transparency, we analyze four representative cases (True Po
 
 \subsection{Model Selection and Test Set Performance}
 
-\emph{Selected Model:} LightGBM with Cross-Entropy loss, threshold = 0.13
+\textbf{Selected Model:} LightGBM with Cross-Entropy loss, threshold = 0.13
 
-\emph{Test Set Results (4,076 hold-out samples):}
+Test Set Results (4,076 hold-out samples):
 
-\begin{table}[H]
-\centering
-\caption{Final Model Performance on Test Set}
-\label{tab:test_performance}
-\begin{tabular}{ll}
-\toprule
-\textbf{Metric} & \textbf{Value} \\
-\midrule
-Test AUC & 0.7659 \\
-Validation AUC & 0.7642 \\
-Generalization Gap & 0.0017 (excellent) \\
-\midrule
-Approval Rate & 40.7\% (1,660 / 4,076) \\
-Default Catch Rate & 83.3\% (870 / 1,044 defaulters rejected) \\
-Default Rate Among Approved & 10.5\% (174 / 1,660) \\
-\midrule
-Confusion Matrix & TN=1,486  FP=1,546 \\
-& FN=174  TP=870 \\
-\bottomrule
-\end{tabular}
-\end{table}
+Table \ref{tab:test_performance} in Appendix \ref{app:model_results} details the comprehensive performance metrics on the held-out test set.
+\textbf{Financial Impact:}
+Using an average credit limit of \$93,392, the model generates \textbf{\$5.75M in net cash flow} (Revenue \$13.9M - Losses \$8.1M) from the test set. This translates to a profit of \textbf{\$3,466 per approved customer} and \textbf{\$1,411 per applicant}.
 
-\emph{Financial Impact (using average credit limit \$93,392):}
-
-\begin{align*}
-\text{Revenue} &= 1{,}486 \text{ approved good} \times \$9{,}339 = \$13{,}878{,}059 \\
-\text{Losses} &= 174 \text{ approved defaulters} \times \$46{,}696 = \$8{,}125{,}108 \\
-\text{Net Cash Flow} &= \$13{,}878{,}059 - \$8{,}125{,}108 = \mathbf{\$5{,}752{,}950}
-\end{align*}
-
-\emph{Per-Customer Profitability:}
-\begin{itemize}
-    \item Profit per approved customer: \$5,752,950 / 1,660 = \$3,466
-    \item Profit per applicant: \$5,752,950 / 4,076 = \$1,411
-\end{itemize}
-
-\emph{Model Generalization:} The minimal AUC difference (0.0017) between validation and test sets indicates excellent generalization with no overfitting. The model's performance is consistent and reliable.
+\textbf{Model Generalization:} The minimal AUC difference (0.0017) between validation and test sets indicates excellent generalization with no overfitting.
 
 \subsection{Deployment Strategy}
 
-\emph{Three-Tier Decision System:}
+\textbf{Automated Decisioning for Small Loans ($\leq$\$200k):}
+To maximize efficiency, we recommend fully automated decisions for small loans:
 
-Based on the model's probability outputs, we recommend implementing a tiered approach:
+Auto-Approve ($P < 0.13$): Instantly approves $\sim$40\% of applicants, reducing manual workload.
 
-\begin{enumerate}
-    \item Auto-Approve: $P(\text{default}) < 0.05$ (5\% threshold)
-    \begin{itemize}
-        \item Characteristics: Perfect payment history, no delinquencies, stable employment
-        \item Volume: $\sim$5\% of applicants
-        \item Instant approval for clearly low-risk customers
-    \end{itemize}
+Auto-Reject ($P \geq 0.13$): Screens out 84.2\% of defaulters automatically.
 
-    \item Manual Review: $0.05 \leq P(\text{default}) < 0.20$
-    \begin{itemize}
-        \item Characteristics: Mixed signals, moderate delinquency, or limited history
-        \item Volume: $\sim$35\% of applicants
-        \item Human underwriters review with SHAP explanations guiding decision
-        \item Consider additional information (income verification, employment stability)
-    \end{itemize}
+Large loans should retain human-in-the-loop review using model scores as decision support.
 
-    \item Auto-Reject: $P(\text{default}) \geq 0.20$
-    \begin{itemize}
-        \item Characteristics: High delinquency, recent late payments, debt accumulation
-        \item Volume: $\sim$60\% of applicants
-        \item Automated rejection with explanation letter citing specific risk factors
-    \end{itemize}
-\end{enumerate}
-
-\emph{Monitoring and Maintenance:}
-
+\textbf{Monitoring \& Risk Controls:}
 \begin{itemize}
-    \item Monthly Metrics: Track approval rate (target: 35-45\%), default rate among approved (alert if $>$ 15%), net profit (target: $>$ \$5M quarterly)
-    \item Quarterly Retraining: Retrain model with new data to capture changing customer behavior and economic conditions
-    \item Feature Drift Detection: Monitor distribution shifts in top 5 SHAP features using KL-divergence
-    \item Fairness Audits: Quarterly analysis of approval rates across demographics (gender, age groups) to ensure compliance with fair lending regulations
-\end{itemize}
-
-\emph{Risk Mitigation:}
-
-\begin{itemize}
-    \item Economic Downturn: In recession scenarios, lower threshold to 0.10-0.11 to reduce default exposure
-    \item Portfolio Growth: If seeking volume expansion, gradually increase threshold to 0.14-0.15 while monitoring default rates
-    \item Model Degradation: If AUC drops below 0.75 on validation data, trigger immediate retraining or model revision
+    \item Performance: Track 'Automation Rate' ($>$90\% target) and separate default rates for automated vs. manual segments.
+    \item Safeguards: Implement 'Circuit Breakers' to halt auto-approvals if defaults spike ($>$20\%) and pre-model fraud checks.
+    \item Fairness: Quarterly audits of approval rates across demographics to ensure unbiased automation.
 \end{itemize}
 
 %% ============================================
@@ -336,51 +275,21 @@ Based on the model's probability outputs, we recommend implementing a tiered app
 %% ============================================
 \section{Conclusion}
 
-This project successfully demonstrates a complete, business-driven machine learning workflow for credit default prediction that balances predictive performance, cost optimization, and interpretability.
+This project demonstrates a business-driven ML workflow that balances predictive performance, cost optimization, and interpretability.
 
-\emph{Key Achievements:}
-
-\begin{enumerate}
-    \item Strong Predictive Performance: The selected LightGBM model with Cross-Entropy loss achieves 0.7642 validation AUC and 0.7659 test AUC (0.0017 generalization gap), outperforming the best glassbox model by 0.0194 AUC points (2.7\% relative improvement).
-
-    \item Substantial Business Impact: Cost-sensitive threshold optimization generates \$5.75M net cash flow with 40.7\% approval rate, representing a 207\% improvement over F1-optimal threshold. The model achieves \$3,466 profit per approved customer while maintaining a manageable 10.5\% default rate.
-
-    \item Actionable Interpretability: SHAP analysis reveals that payment history features (MAX\_DELINQUENCY, PAY\_1, DELINQUENCY\_PERSISTENCE) account for $\sim$70\% of model importance, with demographic factors playing minimal roles. This supports fair lending compliance and provides transparent decision rationale.
-
-    \item Risk-Return Balance: The model successfully addresses the credit risk-return tradeoff: 83.3\% default catch rate (strong risk management) combined with 40.7\% approval rate (sufficient revenue generation).
-\end{enumerate}
-
-\emph{Main Insights:}
-
+\textbf{Key Achievements:}
 \begin{itemize}
-    \item Behavior over Demographics: Payment history is far more predictive than demographic attributes, suggesting credit behavior transcends demographic categories
-    \item Recency Matters: Recent payment status (PAY\_1) has 5.4× higher importance than older history (PAY\_2), indicating the need for real-time monitoring
-    \item Cost Function Design is Critical: Using business-specific cost ratios (5:1) rather than generic metrics (F1-score) yields dramatically different decisions with 3× better financial outcomes. The threshold-vs-loss curves (Appendix \ref{app:cost_curves}) visually demonstrate this fundamental misalignment between traditional ML metrics and business value.
-    \item Interpretability is Recoverable: Blackbox models need not sacrifice transparency when augmented with SHAP analysis, enabling both performance and explainability
+    \item Strong Performance: LightGBM (CE) achieves 0.766 test AUC, outperforming glassbox models by 2.7\%.
+    \item Business Impact: Cost-sensitive optimization generates \$5.75M net cash flow (207\% improvement over F1-score) with a \$3,466 profit per customer.
+    \item Transparency: SHAP analysis confirms reliance on payment history ($\sim$40\% importance) over demographics, supporting fair lending.
 \end{itemize}
 
-\emph{Limitations and Future Work:}
-
+\textbf{Strategic Recommendations:}
 \begin{itemize}
-    \item Temporal Scope: Model trained on 2005 Taiwan data may not generalize to current economic conditions or other geographies without retraining
-    \item Feature Limitations: Missing potentially important features (income, employment history, credit bureau scores, existing debt obligations)
-    \item Static Thresholds: Current threshold optimization is one-time; dynamic adjustment based on economic indicators could improve robustness
-    \item Fairness Analysis: While demographic features show low importance, comprehensive disparate impact analysis is needed for regulatory approval
-    \item Cost Parameter Uncertainty: LGD (50\%) and profit margin (10\%) assumptions require validation with real business data; sensitivity analysis recommended
+    \item \textbf{Deploy Automated Decisioning:} Implement auto-approval/rejection for small loans ($\leq$\$200k) to scale operations.
+    \item \textbf{Adopt Business-Centric Metrics:} Move away from generic F1-scores to profit-based evaluation for all future models.
+    \item \textbf{Monitor \& Adapt:} Track automation rates and default spikes; retrain quarterly to maintain relevance.
 \end{itemize}
-
-\emph{Practical Recommendations:}
-
-For financial institutions implementing this system:
-\begin{enumerate}
-    \item Deploy with the three-tier decision framework (auto-approve/manual review/auto-reject) to balance automation and risk control
-    \item Prioritize SHAP-guided manual review for borderline cases (5-20\% default probability range)
-    \item Monitor default rate among approved customers closely; if exceeding 15\%, lower threshold immediately
-    \item Retrain quarterly with new data to maintain model relevance
-    \item Conduct regular fairness audits to ensure compliance with fair lending regulations
-\end{enumerate}
-
-This project validates that machine learning can generate substantial business value (\$5.75M profit) while maintaining transparency and fairness, serving as a template for responsible AI deployment in financial services.
 
 %% ============================================
 %% APPENDIX
@@ -405,6 +314,28 @@ LightGBM (L2) & Blackbox & L2/MSE & 0.7599 \\
 Logistic Regression & Glassbox & Log Loss & 0.7448 \\
 Linear SVM & Glassbox & Hinge & 0.7441 \\
 Ridge Regression & Glassbox & L2/MSE & 0.7372 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Final Model Performance on Test Set}
+\label{tab:test_performance}
+\begin{tabular}{ll}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+Test AUC & 0.7659 \\
+Validation AUC & 0.7642 \\
+Generalization Gap & 0.0017 (excellent) \\
+\midrule
+Approval Rate & 40.7\% (1,660 / 4,076) \\
+Default Catch Rate & 83.3\% (870 / 1,044 defaulters rejected) \\
+Default Rate Among Approved & 10.5\% (174 / 1,660) \\
+\midrule
+Confusion Matrix & TN=1,486  FP=1,546 \\
+& FN=174  TP=870 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -634,27 +565,5 @@ The following waterfall plots demonstrate how the model arrives at individual pr
 
 \noindent\textbf{False Negative (Costly Error):} Predicted -2.648. Driven by \texttt{MAX\_DELINQUENCY=0} (-0.33) and \texttt{REPAYMENT\_RATIO=0.048} (+0.08). The model was misled by the perfect delinquency history (\texttt{MAX\_DELINQUENCY=0}), which strongly reduced the risk score. While the critically low repayment ratio (4.8\%) was correctly flagged as a risk factor (+0.08), its impact was insufficient to outweigh the clean history, resulting in a missed default.
 
-\section{Detailed Confusion Matrices and Threshold Analysis}\label{app:matrices}
 
-Table below presents the confusion matrices for our best model (LightGBM CE) at both F1-optimal and Cost-optimal thresholds, illustrating the trade-off between precision and recall.
-
-\begin{table}[H]
-\centering
-\caption{Confusion Matrices for LightGBM (CE)}
-\label{tab:confusion_matrices}
-\begin{tabular}{lcc}
-\toprule
-& \textbf{F1-Optimal (0.34)} & \textbf{Cost-Optimal (0.13)} \\
-\midrule
-\textbf{True Negatives (TN)} & 2567 & 1475 \\
-\textbf{False Positives (FP)} & 465 & 1557 \\
-\textbf{False Negatives (FN)} & 471 & 165 \\
-\textbf{True Positives (TP)} & 573 & 879 \\
-\midrule
-\textbf{Precision} & 0.55 & 0.36 \\
-\textbf{Recall} & 0.55 & 0.84 \\
-\textbf{F1-Score} & 0.55 & 0.51 \\
-\bottomrule
-\end{tabular}
-\end{table}
 \end{document}
