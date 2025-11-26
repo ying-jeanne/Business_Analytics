@@ -11,7 +11,7 @@ df = None
 
 def load_data(data_file=None):
     if data_file is None:
-        data_file = os.path.join(pathlib.Path(__file__).parent.parent.resolve(), 'II', 'data', 'webapp_data.csv')
+        data_file = os.path.join('data', 'webapp_data.csv')
     if os.path.exists(data_file):
         df = pd.read_csv(data_file)
         df['ID'] = df['ID'].astype(int)
