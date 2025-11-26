@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request
 import os
 
 app = Flask(__name__)
@@ -26,20 +26,49 @@ def index():
     if df is None:
         return "Error: webapp_data.csv not found. Please generate it first."
     
+    # Get filter parameter from query string
+    filter_type = request.args.get('filter', 'riskiest')
+    threshold = 0.13
+    
     # Create a list of customers for the dropdown
-    # We'll show ID, True Label, and Risk Score
     customers = []
     for idx, row in df.iterrows():
+        pred = 1 if row['Prediction_Score'] >= threshold else 0
+        true = int(row['True_Label'])
+        
+        # Determine status
+        if true == 1 and pred == 1: status = 'TP'
+        elif true == 0 and pred == 0: status = 'TN'
+        elif true == 0 and pred == 1: status = 'FP'
+        elif true == 1 and pred == 0: status = 'FN'
+        
         customers.append({
             'id': row['ID'],
-            'label': int(row['True_Label']),
-            'score': round(row['Prediction_Score'], 3)
+            'label': true,
+            'score': round(row['Prediction_Score'], 3),
+            'status': status
         })
     
-    # Sort by score descending (riskiest first) for easier browsing
-    customers.sort(key=lambda x: x['score'], reverse=True)
+    # Filter based on selection
+    if filter_type == 'TP':
+        customers = [c for c in customers if c['status'] == 'TP']
+    elif filter_type == 'TN':
+        customers = [c for c in customers if c['status'] == 'TN']
+    elif filter_type == 'FP':
+        customers = [c for c in customers if c['status'] == 'FP']
+    elif filter_type == 'FN':
+        customers = [c for c in customers if c['status'] == 'FN']
+    elif filter_type == 'riskiest':
+        # Sort by score descending (riskiest first)
+        customers.sort(key=lambda x: x['score'], reverse=True)
+        customers = customers[:500]  # Limit to 500 for performance
     
-    return render_template('index.html', customers=customers[:500]) # Limit to 500 for performance
+    # For filtered views, sort by score descending and limit
+    if filter_type != 'riskiest':
+        customers.sort(key=lambda x: x['score'], reverse=True)
+        customers = customers[:500]  # Limit to 500 for performance
+    
+    return render_template('index.html', customers=customers, current_filter=filter_type)
 
 @app.route('/details/<int:customer_id>')
 def get_details(customer_id):
