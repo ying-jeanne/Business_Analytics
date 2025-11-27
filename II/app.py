@@ -43,9 +43,9 @@ def index():
         elif true == 1 and pred == 0: status = 'FN'
         
         customers.append({
-            'id': row['ID'],
-            'label': true,
-            'score': round(row['Prediction_Score'], 3),
+            'id': int(row['ID']),
+            'label': int(true),
+            'score': float(round(row['Prediction_Score'], 3)),
             'status': status
         })
     
@@ -80,17 +80,28 @@ def index():
     recall = tp_count / (tp_count + fn_count) if (tp_count + fn_count) > 0 else 0
     
     stats = {
-        'total': all_customers_count,
+        'total': int(all_customers_count),
         'accuracy': round(accuracy * 100, 2),
         'precision': round(precision * 100, 2),
         'recall': round(recall * 100, 2),
-        'tp': tp_count,
-        'tn': tn_count,
-        'fp': fp_count,
-        'fn': fn_count
+        'tp': int(tp_count),
+        'tn': int(tn_count),
+        'fp': int(fp_count),
+        'fn': int(fn_count)
     }
-    
-    return render_template('index.html', customers=customers, current_filter=filter_type, stats=stats)
+
+    # Portfolio optimization comparison data from Project I
+    portfolio_data = {
+        'results': [
+            {'algo': 'LASSO', 'standard': 0.1467, 'grouped': 0.0905, 'winner': 'Standard'},
+            {'algo': 'Ridge', 'standard': 0.1524, 'grouped': 0.0821, 'winner': 'Standard'},
+            {'algo': 'MinVar', 'standard': 0.0273, 'grouped': 0.0919, 'winner': 'Grouped'}
+        ],
+        'winner': 'Standard Ridge (0.1524)',
+        'test_period': 'July-September 2025'
+    }
+
+    return render_template('index.html', customers=customers, current_filter=filter_type, stats=stats, portfolio=portfolio_data)
 
 @app.route('/details/<int:customer_id>')
 def get_details(customer_id):
@@ -115,10 +126,10 @@ def get_details(customer_id):
     
     return jsonify({
         'id': int(row['ID']),
-        'true_label': true,
+        'true_label': int(true),
         'prediction_score': float(row['Prediction_Score']),
         'status': status,
-        'threshold': threshold
+        'threshold': float(threshold)
     })
 
 @app.route('/plot/<int:customer_id>')
@@ -156,7 +167,12 @@ def get_plot(customer_id):
     
     cumulative = base_value
     for feat, shap_val, feat_val in zip(top_features, top_shap_values, top_feature_values):
-        labels.append(f'{feat}={feat_val:.2f}')
+        # Format feature value as int if it's a whole number, otherwise as float
+        if isinstance(feat_val, (int, np.integer)) or (isinstance(feat_val, (float, np.floating)) and feat_val == int(feat_val)):
+            feat_val_str = f'{int(feat_val)}'
+        else:
+            feat_val_str = f'{float(feat_val):.2f}'
+        labels.append(f'{feat}={feat_val_str}')
         values.append(shap_val)
         colors.append('#ff6b6b' if shap_val > 0 else '#4ecdc4')
         cumulative += shap_val

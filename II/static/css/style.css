@@ -522,3 +522,43 @@ h5 {
     outline: 2px solid var(--accent-color);
     outline-offset: 2px;
 }
+
+/* Portfolio Comparison Table */
+.comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.comparison-table thead {
+    background: rgba(56, 189, 248, 0.1);
+}
+
+.comparison-table th {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-primary);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.comparison-table td {
+    padding: 0.75rem 1rem;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.comparison-table tbody tr:hover {
+    background: rgba(56, 189, 248, 0.05);
+}
+
+.winner-cell {
+    background: rgba(34, 197, 94, 0.15);
+    color: var(--color-tp);
+    font-weight: 600;
+}
+
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
