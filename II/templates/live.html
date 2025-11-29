@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block title %}Live Assessment - Credit Risk Intelligence{% endblock %}
+
+{% block extra_head %}
+<!-- Plotly for Charts -->
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="header-section mb-4">
+    <h2>Live Risk Assessment</h2>
+    <p class="text-muted">Interactive tool to evaluate individual customer risk using the production LightGBM model.</p>
+</div>
+
+<!-- Summary Statistics Card (Optional, or keep compact) -->
+<div class="card">
+    <h3 class="mb-4"><i class="fas fa-search-dollar"></i> Customer Filtering</h3>
+    <div class="grid-2">
+        <div class="form-group">
+            <label for="filter-select" class="form-label">Filter by Status</label>
+            <select id="filter-select" class="form-select">
+                <option value="riskiest" {% if current_filter=='riskiest' %}selected{% endif %}>Top 500 Riskiest
+                </option>
+                <option value="TP" {% if current_filter=='TP' %}selected{% endif %}>True Positives (Correct Defaults)
+                </option>
+                <option value="TN" {% if current_filter=='TN' %}selected{% endif %}>True Negatives (Correct Safe)
+                </option>
+                <option value="FP" {% if current_filter=='FP' %}selected{% endif %}>False Positives (False Alarms)
+                </option>
+                <option value="FN" {% if current_filter=='FN' %}selected{% endif %}>False Negatives (Missed Defaults)
+                </option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="customer-select" class="form-label">
+                Select Customer <span class="text-secondary-sm opacity-70">({{ customers|length }} available)</span>
+            </label>
+            <select id="customer-select" class="form-select">
+                <option value="" selected disabled>Choose a customer...</option>
+                {% for c in customers %}
+                <option value="{{ c.id }}">
+                    ID: {{ c.id }} | Score: {{ c.score }} | Actual: {{ c.label }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+</div>
+
+<div id="result-area" class="result-area">
+    <!-- Two Column: Stats & Guide -->
+    <div class="grid-2">
+        <div class="card">
+            <h4 class="card-section-title">📊 Prediction Details</h4>
+            <div class="line-relaxed">
+                <p><span class="text-muted">Customer ID:</span> <strong id="disp-id" class="float-right">-</strong></p>
+                <p><span class="text-muted">Risk Score:</span> <strong id="disp-score" class="float-right">-</strong>
+                </p>
+                <p><span class="text-muted">Threshold:</span> <strong id="disp-threshold" class="float-right">-</strong>
+                </p>
+                <p><span class="text-muted">True Label:</span> <strong id="disp-true" class="float-right">-</strong></p>
+            </div>
+            <div id="status-badge" class="status-badge"></div>
+        </div>
+
+        <div class="card">
+            <h4 class="card-section-title">💡 Interpretation Guide</h4>
+            <ul class="text-muted" style="padding-left: 1.2rem; font-size: 0.9rem;">
+                <li class="mb-2">
+                    <span class="text-danger">Red bars</span> push risk <strong class="text-danger">HIGHER</strong>
+                    (towards default).
+                    <br><small>Examples: Late payments, high utilization</small>
+                </li>
+                <li class="mb-2">
+                    <span class="text-success">Blue bars</span> push risk <strong class="text-success">LOWER</strong>
+                    (towards safety).
+                    <br><small>Examples: Clean history, bill decreases</small>
+                </li>
+                <li>
+                    <strong>Base Value:</strong> The average log-odds of default for the entire population.
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Full Width SHAP Plot -->
+    <div class="card">
+        <h4 class="mb-4">📈 Impact Waterfall Analysis</h4>
+        <div id="loading" class="text-center p-4" style="display: none;">
+            <i class="fas fa-circle-notch fa-spin fa-2x text-accent"></i>
+        </div>
+        <div id="shap-plot" style="min-height: 500px;"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Configuration
+    const resultArea = document.getElementById('result-area');
+    const customerSelect = document.getElementById('customer-select');
+    const filterSelect = document.getElementById('filter-select');
+    const loading = document.getElementById('loading');
+
+    // Filter Change
+    filterSelect.addEventListener('change', function () {
+        // Reload page with new filter
+        window.location.href = '/live?filter=' + this.value;
+    });
+
+    // Auto-Select Logic
+    window.addEventListener('DOMContentLoaded', function () {
+        const options = customerSelect.querySelectorAll('option:not([disabled])');
+        if (options.length > 0 && !customerSelect.value) {
+            const randomIndex = Math.floor(Math.random() * options.length);
+            customerSelect.selectedIndex = randomIndex + 1; // Skip disabled
+            customerSelect.dispatchEvent(new Event('change'));
+        }
+    });
+
+    // Customer Selection
+    customerSelect.addEventListener('change', function () {
+        const customerId = this.value; // string
+        if (!customerId) return;
+
+        // UI Updates
+        resultArea.style.display = 'block';
+        // Small timeout to allow display:block to apply before opacity transition
+        setTimeout(() => { resultArea.style.opacity = '1'; }, 10);
+
+        loading.style.display = 'block';
+        document.getElementById('shap-plot').innerHTML = ''; // Clear previous
+
+        // Fetch Details
+        fetch(`/details/${customerId}`)
+            .then(res => res.json())
+            .then(data => {
+                // Update text fields
+                document.getElementById('disp-id').textContent = data.id;
+                document.getElementById('disp-score').textContent = data.prediction_score.toFixed(3);
+                document.getElementById('disp-threshold').textContent = data.threshold;
+                document.getElementById('disp-true').textContent = data.true_label;
+
+                // Update Badge
+                const badge = document.getElementById('status-badge');
+                badge.textContent = data.status;
+
+                // Remove all previous status classes
+                badge.classList.remove('status-tp', 'status-tn', 'status-fp', 'status-fn');
+
+                // Add appropriate class
+                if (data.status.includes('True Positive')) {
+                    badge.classList.add('status-tp');
+                } else if (data.status.includes('True Negative')) {
+                    badge.classList.add('status-tn');
+                } else if (data.status.includes('False Positive')) {
+                    badge.classList.add('status-fp');
+                } else if (data.status.includes('False Negative')) {
+                    badge.classList.add('status-fn');
+                }
+            });
+
+        // Fetch Plot
+        fetch(`/plot/${customerId}`)
+            .then(res => res.json())
+            .then(plotData => {
+                loading.style.display = 'none';
+
+                // Plotly trace configuration remains in JS as it generates SVG
+                const trace = {
+                    type: 'waterfall',
+                    orientation: 'h',
+                    y: plotData.labels,
+                    x: plotData.values,
+                    text: plotData.text,
+                    textposition: 'outside',
+                    textfont: {
+                        family: 'Inter, sans-serif',
+                        size: 12,
+                        color: '#94a3b8' // text-secondary
+                    },
+                    connector: {
+                        line: {
+                            color: 'rgba(148, 163, 184, 0.5)',
+                            width: 1
+                        }
+                    },
+                    decreasing: {
+                        marker: {
+                            color: '#4ecdc4', // Cyan/Green for safe
+                            line: { width: 0 }
+                        }
+                    },
+                    increasing: {
+                        marker: {
+                            color: '#ef4444', // Red for risk
+                            line: { width: 0 }
+                        }
+                    },
+                    totals: {
+                        marker: {
+                            color: '#334155', // Slate
+                            line: { width: 0 }
+                        }
+                    }
+                };
+
+                const layout = {
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    showlegend: false,
+                    xaxis: {
+                        title: 'Impact on Log-Odds Score',
+                        gridcolor: 'rgba(255,255,255,0.1)',
+                        zerolinecolor: 'rgba(255,255,255,0.2)',
+                        tickfont: { color: '#94a3b8' },
+                        titlefont: { color: '#94a3b8' }
+                    },
+                    yaxis: {
+                        automargin: true,
+                        tickfont: { color: '#f8fafc', size: 12 }, // Primary text color
+                        dtick: 1
+                    },
+                    margin: { t: 30, l: 150, r: 50, b: 50 },
+                    height: 500
+                };
+
+                const config = { resposive: true, displayModeBar: false };
+
+                Plotly.newPlot('shap-plot', [trace], layout, config);
+            })
+            .catch(err => {
+                loading.style.display = 'none';
+                console.error(err);
+                document.getElementById('shap-plot').innerHTML = '<p class="text-center text-danger">Error loading plot.</p>';
+            });
+    });
+</script>
+{% endblock %}

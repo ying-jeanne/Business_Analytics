@@ -1,15 +1,18 @@
 import pandas as pd
 import numpy as np
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, redirect, url_for
 import os
+import pathlib
 
 app = Flask(__name__)
 
-import pathlib
 # Load data
 def load_data(data_file=None):
     if data_file is None:
-        data_file = os.path.join('data', 'webapp_data.csv')
+        # Use absolute path relative to this file to ensure it works regardless of cwd
+        base_dir = pathlib.Path(__file__).parent
+        data_file = base_dir / 'data' / 'webapp_data.csv'
+    
     if os.path.exists(data_file):
         df = pd.read_csv(data_file)
         df['ID'] = df['ID'].astype(int)
@@ -21,8 +24,33 @@ def load_data(data_file=None):
 
 df = load_data()
 
+# ============================================================================
+# Routes
+# ============================================================================
+
 @app.route('/')
-def index():
+def home():
+    """Redirect root to methodology (landing page)."""
+    return redirect(url_for('methodology'))
+
+@app.route('/methodology')
+def methodology():
+    """Page 1: Methodology."""
+    return render_template('methodology.html')
+
+@app.route('/results')
+def results():
+    """Page 2: Results."""
+    return render_template('results.html')
+
+@app.route('/architecture')
+def architecture():
+    """Page 3: Architecture."""
+    return render_template('architecture.html')
+
+@app.route('/live')
+def live():
+    """Page 4: Live Risk Assessment (Old Index)."""
     if df is None:
         return "Error: webapp_data.csv not found. Please generate it first."
     
@@ -68,12 +96,8 @@ def index():
         customers.sort(key=lambda x: x['score'], reverse=True)
         customers = customers[:500]  # Limit to 500 for performance
     
-    # Calculate overall statistics for all customers
-    all_customers_count = len(df)
-    tp_count = sum(1 for c in [{'id': row['ID'], 'label': int(row['True_Label']), 'score': round(row['Prediction_Score'], 3), 'status': ('TP' if (int(row['True_Label']) == 1 and row['Prediction_Score'] >= threshold) else ('TN' if (int(row['True_Label']) == 0 and row['Prediction_Score'] < threshold) else ('FP' if (int(row['True_Label']) == 0 and row['Prediction_Score'] >= threshold) else 'FN')))} for idx, row in df.iterrows()] if c['status'] == 'TP')
-    tn_count = sum(1 for c in [{'id': row['ID'], 'label': int(row['True_Label']), 'score': round(row['Prediction_Score'], 3), 'status': ('TP' if (int(row['True_Label']) == 1 and row['Prediction_Score'] >= threshold) else ('TN' if (int(row['True_Label']) == 0 and row['Prediction_Score'] < threshold) else ('FP' if (int(row['True_Label']) == 0 and row['Prediction_Score'] >= threshold) else 'FN')))} for idx, row in df.iterrows()] if c['status'] == 'TN')
-    fp_count = sum(1 for c in [{'id': row['ID'], 'label': int(row['True_Label']), 'score': round(row['Prediction_Score'], 3), 'status': ('TP' if (int(row['True_Label']) == 1 and row['Prediction_Score'] >= threshold) else ('TN' if (int(row['True_Label']) == 0 and row['Prediction_Score'] < threshold) else ('FP' if (int(row['True_Label']) == 0 and row['Prediction_Score'] >= threshold) else 'FN')))} for idx, row in df.iterrows()] if c['status'] == 'FP')
-    fn_count = sum(1 for c in [{'id': row['ID'], 'label': int(row['True_Label']), 'score': round(row['Prediction_Score'], 3), 'status': ('TP' if (int(row['True_Label']) == 1 and row['Prediction_Score'] >= threshold) else ('TN' if (int(row['True_Label']) == 0 and row['Prediction_Score'] < threshold) else ('FP' if (int(row['True_Label']) == 0 and row['Prediction_Score'] >= threshold) else 'FN')))} for idx, row in df.iterrows()] if c['status'] == 'FN')
+    # Calculate overall statistics for all customers (Optional, if needed for live page)
+    # Kept simple for now as live.html doesn't strictly require full stats unless we re-add the widget.
     
     accuracy = (tp_count + tn_count) / all_customers_count if all_customers_count > 0 else 0
     precision = tp_count / (tp_count + fp_count) if (tp_count + fp_count) > 0 else 0
@@ -151,7 +175,6 @@ def get_plot(customer_id):
     # Build waterfall data
     labels = ['Base Value']
     values = [base_value]
-    colors = ['lightgray']
     text_labels = [f'{base_value:.3f}']
     
     cumulative = base_value
@@ -163,19 +186,16 @@ def get_plot(customer_id):
             feat_val_str = f'{float(feat_val):.2f}'
         labels.append(f'{feat}={feat_val_str}')
         values.append(shap_val)
-        colors.append('#ff6b6b' if shap_val > 0 else '#4ecdc4')
         cumulative += shap_val
         text_labels.append(f'{shap_val:+.3f}')
     
     labels.append('Final score - f(x)')
     values.append(cumulative)
-    colors.append('lightgray')
     text_labels.append(f'{cumulative:.3f}')
     
     return jsonify({
         'labels': labels,
         'values': values,
-        'colors': colors,
         'text': text_labels,
         'base_value': float(base_value),
         'final_value': float(cumulative)

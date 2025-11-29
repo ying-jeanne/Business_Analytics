@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Methodology - Credit Risk Intelligence{% endblock %}
+
+{% block content %}
+<div class="header-section mb-4">
+    <h2>Data Methodology & Feature Engineering</h2>
+    <p class="text-muted">A rigorous approach to data cleaning, feature extraction, and preprocessing for robust credit
+        risk modeling.</p>
+</div>
+
+<div class="card">
+    <h3><i class="fas fa-database"></i> Dataset Overview</h3>
+    <p>
+        We utilize the <strong>UCI Credit Card Default Dataset</strong>, comprising payment information from 30,000
+        credit card clients in Taiwan (April-September 2005).
+        Our analysis specifically targets automated decision-making for small loans.
+    </p>
+    <div class="grid-2 mt-4">
+        <div>
+            <h4>Filtering Criteria</h4>
+            <ul class="list-inside text-muted">
+                <li><strong>Credit Limit:</strong> ≤ $200,000 (Small/Consumer Loans)</li>
+                <li><strong>Sample Size:</strong> 20,378 customers (67.9% of original)</li>
+                <li><strong>Default Rate:</strong> 25.6% (Maintained via stratified sampling)</li>
+            </ul>
+        </div>
+        <div>
+            <h4>Data Splits</h4>
+            <ul class="list-inside text-muted">
+                <li><strong>Training:</strong> 60% (12,226 samples)</li>
+                <li><strong>Validation:</strong> 20% (4,076 samples)</li>
+                <li><strong>Test:</strong> 20% (4,076 samples)</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h3><i class="fas fa-broom"></i> Data Cleaning & Quality Control</h3>
+    <table class="table">
+        <tr>
+            <th class="w-30">Check</th>
+            <th>Action Taken</th>
+        </tr>
+        <tr>
+            <td><strong>Missing Values</strong></td>
+            <td>Confirmed zero missing values across all columns.</td>
+        </tr>
+        <tr>
+            <td><strong>Categorical Consolidation</strong></td>
+            <td>
+                Merged invalid <code>EDUCATION</code> categories (0, 5, 6) into 'Others'.<br>
+                Merged invalid <code>MARRIAGE</code> category (0) into 'Others'.<br>
+                Renamed <code>PAY_0</code> to <code>PAY_1</code> for consistency.
+            </td>
+        </tr>
+        <tr>
+            <td><strong>Range Validation</strong></td>
+            <td>Verified Age (0-90), Bill Amounts (negative allowed for credit), and non-negative Payments.</td>
+        </tr>
+    </table>
+</div>
+
+<div class="card">
+    <h3><i class="fas fa-flask"></i> Feature Engineering</h3>
+    <p class="mb-2">We engineered 8 temporal and behavioral features to capture credit usage trends and repayment
+        reliability.</p>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th class="w-25">Feature Name</th>
+                <th>Description & Business Logic</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>MAX_DELINQUENCY</code></td>
+                <td>
+                    <strong>Worst-case behavior.</strong> Maximum payment delay observed across 6 months. <br>
+                    <span class="text-secondary-sm">Captures severity of payment issues.</span>
+                </td>
+            </tr>
+            <tr>
+                <td><code>DELINQUENCY_PERSISTENCE</code></td>
+                <td>
+                    <strong>Chronic risk.</strong> Maximum consecutive months with late payments. <br>
+                    <span class="text-secondary-sm">Identifies habituated non-payment behavior.</span>
+                </td>
+            </tr>
+            <tr>
+                <td><code>PAY_SLOPE</code></td>
+                <td>
+                    <strong>Payment trend.</strong> OLS regression slope of payment amounts over 6 months. <br>
+                    <span class="text-secondary-sm">Negative slope may indicate increasing financial stress.</span>
+                </td>
+            </tr>
+            <tr>
+                <td><code>BILL_SLOPE</code></td>
+                <td>
+                    <strong>Debt accumulation.</strong> OLS regression slope of bill amounts over 6 months. <br>
+                    <span class="text-secondary-sm">Positive slope indicates growing debt burden.</span>
+                </td>
+            </tr>
+            <tr>
+                <td><code>UTILIZATION_RATE</code></td>
+                <td>
+                    <strong>Credit intensity.</strong> Average (Bill Amount / Credit Limit) ratio. <br>
+                    <span class="text-secondary-sm">High values indicate reliance on credit limit.</span>
+                </td>
+            </tr>
+            <tr>
+                <td><code>REPAYMENT_RATIO</code></td>
+                <td>
+                    <strong>Ability to pay.</strong> Total payments / Total bills over 6 months. <br>
+                    <span class="text-secondary-sm">Ratio > 1 indicates paying down debt principal.</span>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h3><i class="fas fa-cogs"></i> Preprocessing Pipeline</h3>
+    <div class="grid-2">
+        <div>
+            <h4>Glassbox Models (Linear)</h4>
+            <p class="text-muted">Requires strict statistical formatting.</p>
+            <ul>
+                <li><strong>One-Hot Encoding:</strong> Applied to Sex, Education, Marriage (34 total features).</li>
+                <li><strong>Normalization:</strong> Standard scaling applied to continuous features.</li>
+                <li><strong>Class Weighting:</strong> 'Balanced' mode to handle 3:1 imbalance.</li>
+            </ul>
+        </div>
+        <div>
+            <h4>Blackbox Models (Tree-based)</h4>
+            <p class="text-muted">Optimized for non-linear pattern recognition.</p>
+            <ul>
+                <li><strong>Native Categoricals:</strong> No one-hot encoding required (31 total features).</li>
+                <li><strong>Raw Data:</strong> No normalization needed for decision trees.</li>
+                <li><strong>Loss Function:</strong> Cross-Entropy loss for probability calibration.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

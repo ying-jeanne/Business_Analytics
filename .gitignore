@@ -8,4 +8,6 @@
 **/*.aux
 **/*.pdf
 **/*.synctex.gz
-**/CLAUDE.md
+**/.claude/**
+**/.venv/**
+

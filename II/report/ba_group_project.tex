@@ -352,14 +352,14 @@ Figures below show how business cost and F1 loss vary with decision threshold fo
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.8\textwidth]{../graphs/losses_logistic.png}
+\includegraphics[width=0.8\textwidth]{../static/images/losses_logistic.png}
 \caption{Business Cost vs F1 Loss for Logistic Regression across different thresholds. The F1-optimal threshold (minimizing F1 loss) does not align with the cost-optimal threshold (minimizing business cost), resulting in 101\% worse financial performance.}
 \label{fig:losses_logistic}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.8\textwidth]{../graphs/losses_lightgbm.png}
+\includegraphics[width=0.8\textwidth]{../static/images/losses_lightgbm.png}
 \caption{Business Cost vs F1 Loss for LightGBM across different thresholds. The divergence between F1-optimal and cost-optimal thresholds is even more pronounced, leading to 207\% financial improvement when using business-aligned optimization.}
 \label{fig:losses_lightgbm}
 \end{figure}
@@ -484,7 +484,7 @@ Figure \ref{fig:global_shap} displays the top 20 features ranked by their global
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.7\textwidth]{../graphs/global_feature_shap_absolute.png}
+\includegraphics[width=0.7\textwidth]{../static/images/global_feature_shap_absolute.png}
 \caption{Global Feature Importance (Mean |SHAP| value). The model relies heavily on maximum delinquency and recent payment status.}
 \label{fig:global_shap}
 \end{figure}
@@ -493,7 +493,7 @@ Figure \ref{fig:shap_impact} illustrates the directionality of feature impacts. 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.7\textwidth]{../graphs/feature_value_impact_shap.png}
+\includegraphics[width=0.7\textwidth]{../static/images/feature_value_impact_shap.png}
 \caption{SHAP Summary Plot (Beeswarm). Red indicates high feature values, blue indicates low values. Positive SHAP values indicate higher risk of default.}
 \label{fig:shap_impact}
 \end{figure}
@@ -530,13 +530,13 @@ The following waterfall plots demonstrate how the model arrives at individual pr
 \begin{figure}[H]
 \centering
 \begin{subfigure}{0.48\textwidth}
-    \includegraphics[width=\textwidth]{../graphs/true_positive_shap.png}
+    \includegraphics[width=\textwidth]{../static/images/true_positive_shap.png}
     \caption{True Positive: Correctly predicted default.}
     \label{fig:tp_shap}
 \end{subfigure}
 \hfill
 \begin{subfigure}{0.48\textwidth}
-    \includegraphics[width=\textwidth]{../graphs/true_negative_shap.png}
+    \includegraphics[width=\textwidth]{../static/images/true_negative_shap.png}
     \caption{True Negative: Correctly predicted non-default.}
     \label{fig:tn_shap}
 \end{subfigure}
@@ -552,13 +552,13 @@ The following waterfall plots demonstrate how the model arrives at individual pr
 \begin{figure}[H]
 \centering
 \begin{subfigure}{0.48\textwidth}
-    \includegraphics[width=\textwidth]{../graphs/false_positive_shap.png}
+    \includegraphics[width=\textwidth]{../static/images/false_positive_shap.png}
     \caption{False Positive: Good customer rejected.}
     \label{fig:fp_shap}
 \end{subfigure}
 \hfill
 \begin{subfigure}{0.48\textwidth}
-    \includegraphics[width=\textwidth]{../graphs/false_negative_shap.png}
+    \includegraphics[width=\textwidth]{../static/images/false_negative_shap.png}
     \caption{False Negative: Defaulter approved.}
     \label{fig:fn_shap}
 \end{subfigure}

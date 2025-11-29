@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Results - Credit Risk Intelligence{% endblock %}
+
+{% block content %}
+<div class="header-section mb-4">
+    <h2>Model Performance & Financial Impact</h2>
+    <p class="text-muted">Comparing glassbox vs. blackbox models and optimizing for net cash flow.</p>
+</div>
+
+<!-- Key Metrics Hero -->
+<div class="grid-2 mb-4">
+    <div class="card card-header-styled card-header-accent text-center">
+        <h4 class="card-title-sm">Selected Model</h4>
+        <h2 class="card-metric-lg">LightGBM (CE)</h2>
+        <p class="text-success"><i class="fas fa-check-circle"></i> Production Ready</p>
+    </div>
+    <div class="card card-header-styled card-header-success text-center">
+        <h4 class="card-title-sm">Net Cash Flow (Test Set)</h4>
+        <h2 class="card-metric-lg">$5.75 Million</h2>
+        <p class="text-success"><i class="fas fa-arrow-up"></i> 207% vs Standard F1</p>
+    </div>
+</div>
+
+<div class="card">
+    <h3><i class="fas fa-trophy"></i> Model Comparison Study</h3>
+    <p>We evaluated 5 models using Validation AUC as the primary metric. The Blackbox LightGBM model with Cross-Entropy
+        loss outperformed all others.</p>
+
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Model</th>
+                    <th>Type</th>
+                    <th>Loss Function</th>
+                    <th>Validation AUC</th>
+                    <th>Verdict</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="row-highlight-success">
+                    <td>1</td>
+                    <td><strong>LightGBM (CE)</strong></td>
+                    <td>Blackbox</td>
+                    <td>Cross-Entropy</td>
+                    <td><strong>0.7642</strong></td>
+                    <td class="text-success">Selected</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>LightGBM (L2)</td>
+                    <td>Blackbox</td>
+                    <td>L2 / MSE</td>
+                    <td>0.7599</td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>Logistic Regression</td>
+                    <td>Glassbox</td>
+                    <td>Log Loss</td>
+                    <td>0.7448</td>
+                    <td>Benchmark</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>Linear SVM</td>
+                    <td>Glassbox</td>
+                    <td>Hinge</td>
+                    <td>0.7441</td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>Ridge Regression</td>
+                    <td>Glassbox</td>
+                    <td>L2 / Ridge</td>
+                    <td>0.7372</td>
+                    <td>-</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <h3><i class="fas fa-coins"></i> Cost-Sensitive Threshold Optimization</h3>
+    <div class="grid-2">
+        <div>
+            <p>
+                Standard metrics like Accuracy or F1-Score treat all errors equally. In credit risk,
+                <strong>defaulting on a loan (False Negative) costs ~5x more</strong> than the opportunity cost of
+                rejecting a good customer (False Positive).
+            </p>
+            <p>
+                We designed a custom business cost function:
+                <br>
+                <code>Cost = (FN * 5) - (TN * 1)</code>
+            </p>
+            <div class="bg-light-fade p-4 rounded mt-4">
+                <h4>Optimization Results</h4>
+                <ul class="list-none">
+                    <li class="mb-2">
+                        <span class="text-muted">F1-Optimal Threshold:</span> <br>
+                        <strong>0.34</strong> (Approves 74.5% of applicants)
+                    </li>
+                    <li>
+                        <span class="text-muted">Cost-Optimal Threshold:</span> <br>
+                        <strong class="text-success">0.13</strong> (Approves 40.2% of applicants)
+                    </li>
+                </ul>
+                <p class="mt-2 text-warning text-secondary-sm">
+                    <i class="fas fa-exclamation-triangle"></i> Moving to the cost-optimal threshold reduced business
+                    risk exposure significantly.
+                </p>
+            </div>
+        </div>
+        <div>
+            <h4 class="text-center text-muted">Business Cost vs. Threshold</h4>
+            <img src="{{ url_for('static', filename='images/losses_lightGBM.png') }}" alt="Cost Optimization Curve"
+                class="w-full rounded border-light">
+            <p class="text-center text-secondary-sm mt-2">
+                The U-shaped curve shows the minimal cost at threshold 0.13.
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h3><i class="fas fa-clipboard-check"></i> Final Test Set Performance</h3>
+    <div class="grid-2">
+        <div class="table-container">
+            <table class="table">
+                <tr>
+                    <td><strong>Test AUC</strong></td>
+                    <td class="text-right">0.7659 (No overfitting)</td>
+                </tr>
+                <tr>
+                    <td><strong>Approval Rate</strong></td>
+                    <td class="text-right">40.7%</td>
+                </tr>
+                <tr>
+                    <td><strong>Default Rate (Among Approved)</strong></td>
+                    <td class="text-right">10.5%</td>
+                </tr>
+            </table>
+        </div>
+        <div class="table-container">
+            <table class="table">
+                <tr>
+                    <td><strong>True Positives (Defaults Caught)</strong></td>
+                    <td class="text-right text-success">870</td>
+                </tr>
+                <tr>
+                    <td><strong>False Negatives (Defaults Missed)</strong></td>
+                    <td class="text-right text-danger">174</td>
+                </tr>
+                <tr>
+                    <td><strong>Unit Profit (Per Customer)</strong></td>
+                    <td class="text-right">$3,466</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h3><i class="fas fa-lightbulb"></i> Strategic Business Recommendations</h3>
+    <div class="grid-3">
+        <div class="feature-box">
+            <h4><i class="fas fa-robot text-primary"></i> Automate Small Loans</h4>
+            <p>Implement fully automated decisioning for loans &le; $200k. Auto-approve low-risk applicants (Score &lt;
+                0.13) to scale operations efficiently.</p>
+        </div>
+        <div class="feature-box">
+            <h4><i class="fas fa-chart-line text-success"></i> Profit-Centric Metrics</h4>
+            <p>Shift KPIs from generic accuracy to <strong>Net Cash Flow</strong>. Align model evaluation with the 5:1
+                cost asymmetry between defaults and profits.</p>
+        </div>
+        <div class="feature-box">
+            <h4><i class="fas fa-shield-alt text-warning"></i> Risk Monitoring</h4>
+            <p>Track "Automation Rate" and set circuit breakers if default rates spike. Retrain quarterly to adapt to
+                changing economic conditions.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
