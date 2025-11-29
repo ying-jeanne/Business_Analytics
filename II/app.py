@@ -90,18 +90,7 @@ def index():
         'fn': int(fn_count)
     }
 
-    # Portfolio optimization comparison data from Project I
-    portfolio_data = {
-        'results': [
-            {'algo': 'LASSO', 'standard': 0.1467, 'grouped': 0.0905, 'winner': 'Standard'},
-            {'algo': 'Ridge', 'standard': 0.1524, 'grouped': 0.0821, 'winner': 'Standard'},
-            {'algo': 'MinVar', 'standard': 0.0273, 'grouped': 0.0919, 'winner': 'Grouped'}
-        ],
-        'winner': 'Standard Ridge (0.1524)',
-        'test_period': 'July-September 2025'
-    }
-
-    return render_template('index.html', customers=customers, current_filter=filter_type, stats=stats, portfolio=portfolio_data)
+    return render_template('index.html', customers=customers, current_filter=filter_type, stats=stats)
 
 @app.route('/details/<int:customer_id>')
 def get_details(customer_id):

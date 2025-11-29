@@ -163,57 +163,6 @@
         </div>
     </div>
 
-    <!-- Portfolio Optimization Results Section -->
-    <div class="container py-5">
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header bg-primary">📊 Portfolio Optimization Results (Project I Update)</div>
-                    <div class="card-body">
-                        <p class="mb-3" style="color: var(--text-secondary);">
-                            Algorithm comparison on NEW test data: <strong>{{ portfolio.test_period }}</strong>
-                        </p>
-
-                        <!-- Comparison Table -->
-                        <div class="table-responsive">
-                            <table class="comparison-table">
-                                <thead>
-                                    <tr>
-                                        <th>Algorithm</th>
-                                        <th>Standard Lasso/Ridge</th>
-                                        <th>Grouped (Mode 3)</th>
-                                        <th>Winner</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for result in portfolio.results %}
-                                    <tr>
-                                        <td><strong>{{ result.algo }}</strong></td>
-                                        <td class="{% if result.winner == 'Standard' %}winner-cell{% endif %}">
-                                            {{ result.standard }}
-                                            {% if result.winner == 'Standard' %}✓{% endif %}
-                                        </td>
-                                        <td class="{% if result.winner == 'Grouped' %}winner-cell{% endif %}">
-                                            {{ result.grouped }}
-                                            {% if result.winner == 'Grouped' %}✓{% endif %}
-                                        </td>
-                                        <td>{{ result.winner }}</td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <!-- Winner Summary -->
-                        <div class="mt-4 p-3" style="background: rgba(34, 197, 94, 0.1); border-left: 3px solid var(--color-tp); border-radius: var(--radius-sm);">
-                            <strong>Overall Winner:</strong> {{ portfolio.winner }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Footer -->
     <footer class="project-footer">
         <div class="container">
