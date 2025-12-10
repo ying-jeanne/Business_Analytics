@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Home - LendRight{% endblock %}
+
+{% block content %}
+<div class="hero-section text-center mb-5">
+    <div class="hero-image-container mb-4"
+        style="border-radius: 1rem; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+        <img src="{{ url_for('static', filename='images/hero_finance.png') }}" alt="Financial AI"
+            class="img-fluid w-full" style="max-height: 400px; object-fit: cover;">
+    </div>
+
+    <h1 class="display-4 fw-bold mb-3">Explainable Credit Intelligence</h1>
+    <p class="lead text-muted mb-4 mx-auto" style="max-width: 800px;">
+        Empowering financial institutions with transparent, AI-driven credit risk optimization.
+        Leveraging advanced machine learning and SHAP explainability to minimize defaults and maximize profitability.
+    </p>
+
+    <div class="d-flex justify-content-center gap-3">
+        <a href="{{ url_for('methodology') }}" class="btn-custom btn-primary">
+            Explore Pipeline <i class="fas fa-arrow-right ms-2"></i>
+        </a>
+        <a href="{{ url_for('live') }}" class="btn-custom btn-secondary">
+            Live Demo <i class="fas fa-bolt ms-2"></i>
+        </a>
+    </div>
+</div>
+
+<div class="features-grid grid-3 gap-4">
+    <div class="card text-center p-4">
+        <div class="icon-circle mb-3 mx-auto text-accent">
+            <i class="fas fa-database fa-2x"></i>
+        </div>
+        <h4>Data Integrity</h4>
+        <p class="text-secondary-sm">Rigorous cleaning and feature engineering pipelines ensuring data quality and model
+            readiness.</p>
+    </div>
+
+    <div class="card text-center p-4">
+        <div class="icon-circle mb-3 mx-auto text-success">
+            <i class="fas fa-chart-line fa-2x"></i>
+        </div>
+        <h4>Cost Optimization</h4>
+        <p class="text-secondary-sm">Business-aligned metrics prioritizing profit maximization over raw accuracy.</p>
+    </div>
+
+    <div class="card text-center p-4">
+        <div class="icon-circle mb-3 mx-auto text-warning">
+            <i class="fas fa-scale-balanced fa-2x"></i>
+        </div>
+        <h4>Explainable AI</h4>
+        <p class="text-secondary-sm">Full transparency with SHAP values, complying with regulatory standards.</p>
+    </div>
+</div>
+
+<style>
+    .btn-custom {
+        padding: 0.8rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: transform 0.2s;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .btn-primary {
+        background-color: var(--accent-color);
+        color: #fff;
+    }
+
+    .btn-secondary {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+    }
+
+    .btn-custom:hover {
+        transform: translateY(-2px);
+        color: #fff;
+    }
+
+    .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+</style>
+{% endblock %}

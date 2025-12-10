@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Credit Default Prediction{% endblock %}</title>
+    <title>{% block title %}LendRight - Explainable Credit Scoring{% endblock %}</title>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
@@ -21,28 +21,40 @@
         <div class="container">
             <div class="nav-brand">
                 <h1>
-                    <i class="fas fa-shield-halved text-success"></i>
-                    Credit Risk Intelligence
+                    <a style="color: inherit; text-decoration: none; display: flex; align-items: center; gap: 0.75rem;">
+                        <i class="fas fa-shield-halved text-success"></i>
+                        LendRight
+                    </a>
                 </h1>
             </div>
             <ul class="nav-menu">
                 <li>
-                    <a href="{{ url_for('methodology') }}"
-                        class="nav-tab {% if request.endpoint == 'methodology' %}active{% endif %}">
-                        <span class="nav-icon"><i class="fas fa-flask"></i></span>
+                    <a href="{{ url_for('home') }}"
+                        class="nav-tab {% if request.endpoint == 'home' %}active{% endif %}">
+                        <span class="nav-icon"><i class="fas fa-home"></i></span>
                         <span class="nav-text">
-                            <span class="nav-title">Methodology</span>
-                            <span class="nav-subtitle">Data & Approach</span>
+                            <span class="nav-title">Overview</span>
+                            <span class="nav-subtitle">Home</span>
                         </span>
                     </a>
                 </li>
                 <li>
-                    <a href="{{ url_for('results') }}"
-                        class="nav-tab {% if request.endpoint == 'results' %}active{% endif %}">
+                    <a href="{{ url_for('methodology') }}"
+                        class="nav-tab {% if request.endpoint == 'methodology' %}active{% endif %}">
+                        <span class="nav-icon"><i class="fas fa-database"></i></span>
+                        <span class="nav-text">
+                            <span class="nav-title">Data Pipeline</span>
+                            <span class="nav-subtitle">Cleaning & Features</span>
+                        </span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('analysis') }}"
+                        class="nav-tab {% if request.endpoint == 'analysis' %}active{% endif %}">
                         <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
                         <span class="nav-text">
-                            <span class="nav-title">Analysis Results</span>
-                            <span class="nav-subtitle">Model Performance</span>
+                            <span class="nav-title">Analysis</span>
+                            <span class="nav-subtitle">Results & Architecture</span>
                         </span>
                     </a>
                 </li>
@@ -51,18 +63,8 @@
                         class="nav-tab {% if request.endpoint == 'live' %}active{% endif %}">
                         <span class="nav-icon"><i class="fas fa-bolt"></i></span>
                         <span class="nav-text">
-                            <span class="nav-title">Live Assessment</span>
+                            <span class="nav-title">Live Demo</span>
                             <span class="nav-subtitle">Interactive Tool</span>
-                        </span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ url_for('architecture') }}"
-                        class="nav-tab {% if request.endpoint == 'architecture' %}active{% endif %}">
-                        <span class="nav-icon"><i class="fas fa-network-wired"></i></span>
-                        <span class="nav-text">
-                            <span class="nav-title">Architecture</span>
-                            <span class="nav-subtitle">System Design</span>
                         </span>
                     </a>
                 </li>
@@ -76,7 +78,7 @@
 
     <footer>
         <div class="container">
-            <p>&copy; 2025 Credit Risk Intelligence System</p>
+            <p>&copy; 2025 LendRight</p>
             <p class="footer-note">Cost-Sensitive Optimization • SHAP Explainability • Regulatory Compliance Ready</p>
             <p class="footer-team">
                 DBA5106 Group Project II: ZHOU ZIHAN, ZHAO QIYA, WANG YING

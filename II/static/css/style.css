@@ -1,24 +1,38 @@
 :root {
+    /* Brand Colors - Fintech Blue */
     --primary-color: #0f172a;
-    /* Deep Slate Blue - Trust, Authority */
-    --accent-color: #0ea5e9;
-    /* Bright Blue - Tech, Clarity */
+    /* Deep Slate (Navbar/Headings) */
+    --accent-color: #4f46e5;
+    /* Indigo (Buttons/Links/Icons) */
+
+    /* Semantic Colors */
     --success-color: #10b981;
-    /* Green - Profit/Safe */
+    /* Emerald Green */
     --danger-color: #ef4444;
-    /* Red - Risk/Loss */
+    /* Red */
     --warning-color: #f59e0b;
-    /* Amber - Warning */
-    --bg-dark: #020617;
-    /* Very Dark Blue/Black */
-    --bg-card: #1e293b;
-    /* Dark Blue Grey */
-    --text-primary: #f8fafc;
-    /* White-ish */
-    --text-secondary: #94a3b8;
-    /* Light Grey */
-    --border-color: #334155;
-    /* Slate Grey */
+    /* Amber */
+
+    /* Backgrounds - Light Mode */
+    --bg-dark: #ffffff;
+    /* Main Body Background */
+    --bg-card: #f8fafc;
+    /* Cards (Very light grey) */
+    --bg-navbar: #1e293b;
+    /* Dark Slate for Navbar */
+
+    /* Text Colors */
+    --text-primary: #1e293b;
+    /* Dark Grey for main text */
+    --text-inverse: #f8fafc;
+    /* White text for Navbar/Dark backgrounds */
+    --text-secondary: #64748b;
+    /* Medium Grey */
+
+    /* Borders */
+    --border-color: #e2e8f0;
+    /* Light border */
+
     --nav-height: 64px;
 }
 
@@ -96,39 +110,35 @@ main {
 
 /* Navbar */
 .navbar {
-    background-color: rgba(15, 23, 42, 0.95);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-navbar);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     position: sticky;
     top: 0;
     z-index: 1000;
-    padding: 0.2rem 0;
-    box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.3);
+    height: var(--nav-height);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .navbar .container {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap;
+    height: 100%;
 }
 
 .nav-brand h1 {
-    font-size: 1.35rem;
-    color: var(--text-primary);
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin: 0;
+    font-size: 1.4rem;
+    margin-bottom: 0.1rem;
+    color: var(--text-inverse);
 }
 
 .nav-menu {
     display: flex;
     gap: 0.5rem;
     list-style: none;
-    margin: 0;
-    padding: 0;
-    flex-wrap: wrap;
+    padding: 0.25rem;
+    border-radius: 0.75rem;
 }
 
 .nav-tab {
@@ -137,7 +147,7 @@ main {
     gap: 0.75rem;
     padding: 0.6rem 1.2rem;
     border-radius: 0.75rem;
-    color: var(--text-secondary);
+    color: rgba(255, 255, 255, 0.85);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     border: 1px solid transparent;
@@ -145,15 +155,12 @@ main {
 
 .nav-tab:hover {
     background-color: rgba(255, 255, 255, 0.05);
-    color: var(--text-primary);
     transform: translateY(-1px);
 }
 
 .nav-tab.active {
     background-color: rgba(14, 165, 233, 0.1);
-    color: var(--accent-color);
-    border-color: rgba(14, 165, 233, 0.2);
-    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.1);
+    color: var(--border-color);
 }
 
 .nav-icon {
@@ -236,12 +243,14 @@ main {
 
 /* Cards */
 .card {
-    background-color: var(--bg-card);
+    background: var(--bg-card);
+    /* Now light grey/white */
     border: 1px solid var(--border-color);
     border-radius: 1rem;
     padding: 1.5rem;
     margin-bottom: 1.5rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    /* Subtle dark shadow */
 }
 
 .card-header-styled {

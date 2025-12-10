@@ -6,7 +6,6 @@ import pathlib
 
 app = Flask(__name__)
 
-# Load data
 def load_data(data_file=None):
     if data_file is None:
         # Use absolute path relative to this file to ensure it works regardless of cwd
@@ -24,29 +23,20 @@ def load_data(data_file=None):
 
 df = load_data()
 
-# ============================================================================
-# Routes
-# ============================================================================
-
 @app.route('/')
 def home():
-    """Redirect root to methodology (landing page)."""
-    return redirect(url_for('methodology'))
+    """Landing Page."""
+    return render_template('home.html')
 
 @app.route('/methodology')
 def methodology():
     """Page 1: Methodology."""
     return render_template('methodology.html')
 
-@app.route('/results')
-def results():
-    """Page 2: Results."""
+@app.route('/analysis')
+def analysis():
+    """Page 2: Analysis (Results + Architecture)."""
     return render_template('results.html')
-
-@app.route('/architecture')
-def architecture():
-    """Page 3: Architecture."""
-    return render_template('architecture.html')
 
 @app.route('/live')
 def live():

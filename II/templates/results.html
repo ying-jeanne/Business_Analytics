@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Results - Credit Risk Intelligence{% endblock %}
+{% block title %}Analysis - LendRight{% endblock %}
 
 {% block content %}
 <div class="header-section mb-4">
@@ -183,6 +183,104 @@
             <h4><i class="fas fa-shield-alt text-warning"></i> Risk Monitoring</h4>
             <p>Track "Automation Rate" and set circuit breakers if default rates spike. Retrain quarterly to adapt to
                 changing economic conditions.</p>
+        </div>
+    </div>
+</div>
+
+<br>
+<hr class="my-5" style="border-color: var(--border-color); opacity: 0.3;"><br>
+
+<div class="header-section mb-4">
+    <h2>System Architecture & Explainability</h2>
+    <p class="text-muted">Opening the Blackbox with SHAP (SHapley Additive exPlanations).</p>
+</div>
+
+<div class="card">
+    <h3><i class="fas fa-network-wired"></i> Why SHAP?</h3>
+    <p>
+        While LightGBM provides superior predictive performance (AUC 0.764), it is a complex "Blackbox" model.
+        In finance, we cannot rely on opaque algorithms. We employ <strong>SHAP</strong> values to bridge the gap
+        between
+        performance and transparency, satisfying regulatory requirements (e.g., GDPR Article 22, Fair Lending).
+    </p>
+</div>
+
+<div class="card">
+    <h3><i class="fas fa-globe"></i> Global Feature Importance</h3>
+    <div class="grid-2">
+        <div>
+            <p>
+                We analyzed which features drive default risk globally across all customers.
+                The results confirm that <strong>past payment behavior</strong> is the strongest predictor, far
+                outweighing demographics.
+            </p>
+            <ul class="d-none d-md-block mt-4 text-muted">
+                <li><strong>MAX_DELINQUENCY:</strong> The single most important factor.</li>
+                <li><strong>PAY_1:</strong> Recent payment status is critical.</li>
+                <li><strong>Demographics:</strong> (Age, Sex, Marriage) have very low impact, ensuring fairness.</li>
+            </ul>
+        </div>
+        <div>
+            <img src="{{ url_for('static', filename='images/global_feature_shap_absolute.png') }}"
+                alt="Global Feature Importance" class="w-full rounded">
+        </div>
+    </div>
+    <div class="mt-4">
+        <h4>Feature Impact Direction (Beeswarm Plot)</h4>
+        <p class="text-muted text-secondary-sm">Red dots = High feature values. Blue dots = Low feature values. Right =
+            Higher Risk.</p>
+        <img src="{{ url_for('static', filename='images/feature_value_impact_shap.png') }}" alt="SHAP Beeswarm Plot"
+            class="w-full rounded border-light">
+    </div>
+</div>
+
+<div class="card">
+    <h3><i class="fas fa-microscope"></i> Local Interpretability (Case Studies)</h3>
+    <p class="mb-4">SHAP allows us to explain <em>individual</em> predictions. We can tell a specific customer exactly
+        why they were approved or rejected.</p>
+
+    <div class="grid-2">
+        <div class="case-study-card bg-success-fade">
+            <h4 class="text-success">True Negative (Correct Approval)</h4>
+            <img src="{{ url_for('static', filename='images/true_negative_shap.png') }}" alt="True Negative SHAP"
+                class="w-full">
+            <p class="mt-2 text-secondary-sm">
+                <strong>Reasoning:</strong> Model correctly identified low risk due to <code>MAX_DELINQUENCY=0</code>
+                (Blue bar pushing left). Clean history equals safe approval.
+            </p>
+        </div>
+        <div class="case-study-card bg-danger-fade">
+            <h4 class="text-danger">True Positive (Correct Rejection)</h4>
+            <img src="{{ url_for('static', filename='images/true_positive_shap.png') }}" alt="True Positive SHAP"
+                class="w-full">
+            <p class="mt-2 text-secondary-sm">
+                <strong>Reasoning:</strong> Model correctly flagged high risk due to <code>PAY_1=2</code> and
+                <code>MAX_DELINQUENCY=2</code> (Red bars pushing right). Recent 2-month delay is a major red flag.
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h3><i class="fas fa-server"></i> Technical Stack</h3>
+    <div class="grid-2">
+        <div>
+            <h4>Modelling & Analysis</h4>
+            <ul>
+                <li><strong>Python:</strong> Core language</li>
+                <li><strong>LightGBM:</strong> Gradient Boosting framework</li>
+                <li><strong>Scikit-Learn:</strong> Pipeline & Evaluation</li>
+                <li><strong>SHAP:</strong> Game-theoretic explanations</li>
+            </ul>
+        </div>
+        <div>
+            <h4>Web Application</h4>
+            <ul>
+                <li><strong>Flask:</strong> Web Server</li>
+                <li><strong>Pandas:</strong> Data Handling</li>
+                <li><strong>Chart.js:</strong> Interactive visualizations</li>
+                <li><strong>HTML5/CSS3:</strong> Custom Finance Theme</li>
+            </ul>
         </div>
     </div>
 </div>
