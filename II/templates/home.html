@@ -4,52 +4,107 @@
 
 {% block content %}
 <div class="hero-section text-center mb-5">
-    <div class="hero-image-container mb-4"
-        style="border-radius: 1rem; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-        <img src="{{ url_for('static', filename='images/hero_finance.png') }}" alt="Financial AI"
-            class="img-fluid w-full" style="max-height: 400px; object-fit: cover;">
-    </div>
-
-    <h1 class="display-4 fw-bold mb-3">Explainable Credit Intelligence</h1>
-    <p class="lead text-muted mb-4 mx-auto" style="max-width: 800px;">
-        Empowering financial institutions with transparent, AI-driven credit risk optimization.
-        Leveraging advanced machine learning and SHAP explainability to minimize defaults and maximize profitability.
-    </p>
-
-    <div class="d-flex justify-content-center gap-3">
-        <a href="{{ url_for('methodology') }}" class="btn-custom btn-primary">
-            Explore Pipeline <i class="fas fa-arrow-right ms-2"></i>
-        </a>
-        <a href="{{ url_for('live') }}" class="btn-custom btn-secondary">
-            Live Demo <i class="fas fa-bolt ms-2"></i>
-        </a>
+    <div class="page-header page-header-with-bg"
+        style="--bg-image: url({{ url_for('static', filename='images/credit2.jpg') }});">
+        <h1>Explainable Credit Intelligence</h1>
+        <p class="page-subtitle">Empowering financial institutions with transparent, AI-driven credit risk optimization.
+        </p>
     </div>
 </div>
 
-<div class="features-grid grid-3 gap-4">
-    <div class="card text-center p-4">
-        <div class="icon-circle mb-3 mx-auto text-accent">
-            <i class="fas fa-database fa-2x"></i>
-        </div>
-        <h4>Data Integrity</h4>
-        <p class="text-secondary-sm">Rigorous cleaning and feature engineering pipelines ensuring data quality and model
-            readiness.</p>
-    </div>
+<!-- Project Overview Section -->
+<div class="container mb-5 margin-top-2">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <h2 class="section-title">Project Overview</h2>
+            <style>
+                /* Custom Grid for non-Bootstrap env */
+                .custom-grid-3 {
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 2rem;
+                    text-align: center;
+                }
 
-    <div class="card text-center p-4">
-        <div class="icon-circle mb-3 mx-auto text-success">
-            <i class="fas fa-chart-line fa-2x"></i>
-        </div>
-        <h4>Cost Optimization</h4>
-        <p class="text-secondary-sm">Business-aligned metrics prioritizing profit maximization over raw accuracy.</p>
-    </div>
+                @media (max-width: 768px) {
+                    .custom-grid-3 {
+                        grid-template-columns: 1fr;
+                        /* Stack on mobile */
+                    }
+                }
 
-    <div class="card text-center p-4">
-        <div class="icon-circle mb-3 mx-auto text-warning">
-            <i class="fas fa-scale-balanced fa-2x"></i>
+                .grid-item {
+                    padding: 1rem;
+                }
+            </style>
+            <div class="custom-grid-3">
+                <!-- Column 1: The Pain Point -->
+                <div class="grid-item">
+                    <div class="mb-3 d-flex align-items-center justify-content-center" style="height: 50px;">
+                        <span class="text-primary"><i class="fas fa-exclamation-circle fa-2x"></i></span>
+                    </div>
+                    <h3 class="h5 fw-bold mb-3">The Pain Point</h3>
+                    <p class="text-secondary small fh-custom">
+                        Credit default is a real challenge for financial institutions. For small loans, the operational
+                        complexity and cost of manual review often outweigh the generated revenue.
+                    </p>
+                </div>
+
+                <!-- Column 2: The Balance -->
+                <div class="grid-item">
+                    <div class="mb-3 d-flex align-items-center justify-content-center" style="height: 50px;">
+                        <span class="text-warning"><i class="fas fa-balance-scale fa-2x"></i></span>
+                    </div>
+                    <h3 class="h5 fw-bold mb-3">The Balance</h3>
+                    <p class="text-secondary small fh-custom">
+                        Institutions need to balance efficiency with compliance. Pure automation saves costs, but strict
+                        regulations require decisions to be fully explainable.
+                    </p>
+                </div>
+
+                <!-- Column 3: LendRight Intent -->
+                <div class="grid-item">
+                    <div class="mb-3 d-flex align-items-center justify-content-center" style="height: 50px;">
+                        <img src="{{ url_for('static', filename='images/favicon.png') }}" alt="LendRight"
+                            style="height: 42px; width: 42px; object-fit: contain;">
+                    </div>
+                    <h3 class="h5 fw-bold mb-3">Our Intent</h3>
+                    <p class="text-secondary small fh-custom">
+                        LendRight intends to provide an <strong>automated yet explainable ML solution</strong> for
+                        credit
+                        application review, solving the cost vs. compliance trade-off.
+                    </p>
+                </div>
+            </div>
         </div>
-        <h4>Explainable AI</h4>
-        <p class="text-secondary-sm">Full transparency with SHAP values, complying with regulatory standards.</p>
+    </div>
+</div>
+
+<!-- Meet the Team Section -->
+<div class="container mb-5">
+    <h2 class="section-title">Meet the Team</h2>
+
+    <div class="team-grid">
+        <a href="https://www.linkedin.com/in/zhou-zihan/" target="_blank" class="team-card team-link">
+            <div class="team-avatar">ZZ</div>
+            <h3>Zhou Zihan</h3>
+            <p class="team-role">Team Member</p>
+            <span class="external-link-icon"><i class="fas fa-external-link-alt"></i></span>
+        </a>
+
+        <a href="https://www.linkedin.com/in/qiya-zhao-493632377/" target="_blank" class="team-card team-link">
+            <div class="team-avatar">ZQ</div>
+            <h3>Zhao Qiya</h3>
+            <p class="team-role">Team Member</p>
+            <span class="external-link-icon"><i class="fas fa-external-link-alt"></i></span>
+        </a>
+
+        <a href="https://ying-jeanne.github.io/" target="_blank" class="team-card team-link">
+            <div class="team-avatar highlight">YW</div>
+            <h3>Ying-Jeanne Wang</h3>
+            <p class="team-role">Team Member</p>
+            <span class="external-link-icon"><i class="fas fa-external-link-alt"></i></span>
+        </a>
     </div>
 </div>
 

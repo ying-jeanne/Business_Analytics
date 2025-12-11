@@ -28,10 +28,9 @@ def home():
     """Landing Page."""
     return render_template('home.html')
 
-@app.route('/methodology')
-def methodology():
-    """Page 1: Methodology."""
-    return render_template('methodology.html')
+@app.route('/data')
+def data():
+    return render_template('data.html')
 
 @app.route('/analysis')
 def analysis():
@@ -86,25 +85,7 @@ def live():
         customers.sort(key=lambda x: x['score'], reverse=True)
         customers = customers[:500]  # Limit to 500 for performance
     
-    # Calculate overall statistics for all customers (Optional, if needed for live page)
-    # Kept simple for now as live.html doesn't strictly require full stats unless we re-add the widget.
-    
-    accuracy = (tp_count + tn_count) / all_customers_count if all_customers_count > 0 else 0
-    precision = tp_count / (tp_count + fp_count) if (tp_count + fp_count) > 0 else 0
-    recall = tp_count / (tp_count + fn_count) if (tp_count + fn_count) > 0 else 0
-    
-    stats = {
-        'total': int(all_customers_count),
-        'accuracy': round(accuracy * 100, 2),
-        'precision': round(precision * 100, 2),
-        'recall': round(recall * 100, 2),
-        'tp': int(tp_count),
-        'tn': int(tn_count),
-        'fp': int(fp_count),
-        'fn': int(fn_count)
-    }
-
-    return render_template('index.html', customers=customers, current_filter=filter_type, stats=stats)
+    return render_template('live.html', customers=customers, current_filter=filter_type)
 
 @app.route('/details/<int:customer_id>')
 def get_details(customer_id):

@@ -3,23 +3,26 @@
 {% block title %}Data Pipeline - LendRight{% endblock %}
 
 {% block content %}
-<div class="header-section mb-4">
+<div class="header-section mb-4r text-center">
     <h2>Data Pipeline & Feature Engineering</h2>
-    <p class="text-muted">A rigorous approach to data cleaning, feature extraction, and preprocessing for robust credit
+    <p>A rigorous approach to data cleaning, feature extraction, and preprocessing for robust credit
         risk modeling.</p>
 </div>
 
-<div class="card">
+<div class="card margin-top-2">
     <h3><i class="fas fa-database"></i> Dataset Overview</h3>
     <p>
-        We utilize the <strong>UCI Credit Card Default Dataset</strong>, comprising payment information from 30,000
+        We utilize the <a href="https://www.kaggle.com/datasets/uciml/default-of-credit-card-clients-dataset"
+            target="_blank" style="text-decoration: underline;"><strong>UCI Credit Card Default Dataset</strong></a>,
+        comprising payment information from
+        30,000
         credit card clients in Taiwan (April-September 2005).
         Our analysis specifically targets automated decision-making for small loans.
     </p>
     <div class="grid-2 mt-4">
         <div>
             <h4>Filtering Criteria</h4>
-            <ul class="list-inside text-muted">
+            <ul class="list-inside">
                 <li><strong>Credit Limit:</strong> ≤ $200,000 (Small/Consumer Loans)</li>
                 <li><strong>Sample Size:</strong> 20,378 customers (67.9% of original)</li>
                 <li><strong>Default Rate:</strong> 25.6% (Maintained via stratified sampling)</li>
@@ -27,7 +30,7 @@
         </div>
         <div>
             <h4>Data Splits</h4>
-            <ul class="list-inside text-muted">
+            <ul class="list-inside">
                 <li><strong>Training:</strong> 60% (12,226 samples)</li>
                 <li><strong>Validation:</strong> 20% (4,076 samples)</li>
                 <li><strong>Test:</strong> 20% (4,076 samples)</li>
@@ -64,7 +67,8 @@
 
 <div class="card">
     <h3><i class="fas fa-flask"></i> Feature Engineering</h3>
-    <p class="mb-2">We engineered 8 temporal and behavioral features to capture credit usage trends and repayment
+    <p style="font-size: small;">We engineered 8 temporal and behavioral features to capture credit usage trends and
+        repayment
         reliability.</p>
 
     <table class="table">
@@ -126,8 +130,8 @@
     <div class="grid-2">
         <div>
             <h4>Glassbox Models (Linear)</h4>
-            <p class="text-muted">Requires strict statistical formatting.</p>
-            <ul>
+            <p class="text-muted" style="font-size: small;">Requires strict statistical formatting.</p>
+            <ul class="list-inside">
                 <li><strong>One-Hot Encoding:</strong> Applied to Sex, Education, Marriage (34 total features).</li>
                 <li><strong>Normalization:</strong> Standard scaling applied to continuous features.</li>
                 <li><strong>Class Weighting:</strong> 'Balanced' mode to handle 3:1 imbalance.</li>
@@ -135,8 +139,8 @@
         </div>
         <div>
             <h4>Blackbox Models (Tree-based)</h4>
-            <p class="text-muted">Optimized for non-linear pattern recognition.</p>
-            <ul>
+            <p class="text-muted" style="font-size: small;">Optimized for non-linear pattern recognition.</p>
+            <ul class="list-inside">
                 <li><strong>Native Categoricals:</strong> No one-hot encoding required (31 total features).</li>
                 <li><strong>Raw Data:</strong> No normalization needed for decision trees.</li>
                 <li><strong>Loss Function:</strong> Cross-Entropy loss for probability calibration.</li>

@@ -1,8 +1,8 @@
 :root {
     /* Brand Colors - Fintech Blue */
-    --primary-color: #0f172a;
+    --primary-color: #0f0f0f;
     /* Deep Slate (Navbar/Headings) */
-    --accent-color: #4f46e5;
+    --accent-color: #092092;
     /* Indigo (Buttons/Links/Icons) */
 
     /* Semantic Colors */
@@ -18,7 +18,7 @@
     /* Main Body Background */
     --bg-card: #f8fafc;
     /* Cards (Very light grey) */
-    --bg-navbar: #1e293b;
+    --bg-navbar: #0f0f0f;
     /* Dark Slate for Navbar */
 
     /* Text Colors */
@@ -44,6 +44,48 @@
 
 .margin-top-2 {
     margin-top: 2rem !important;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding: 1rem 0;
+}
+
+/* Hero Header with Background Image */
+.page-header-with-bg {
+    position: relative;
+    height: 10rem;
+    background-size: cover;
+    flex-direction: column;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.page-header-with-bg::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: var(--bg-image);
+    background-size: cover;
+    background-position: center var(--bg-pos-y, 60%);
+    background-attachment: fixed;
+    opacity: 0.6;
+    z-index: -1;
+}
+
+.page-header-with-bg h1,
+.page-header-with-bg p {
+    position: relative;
+    z-index: 2;
+    color: var(--primary-color);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 body {
@@ -75,12 +117,11 @@ h1 {
 h2 {
     font-size: 2rem;
     letter-spacing: -0.025em;
-    margin-bottom: 1.5rem;
 }
 
 h3 {
     font-size: 1.5rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0.6rem;
     color: var(--accent-color);
 }
 
@@ -116,7 +157,6 @@ main {
     position: sticky;
     top: 0;
     z-index: 1000;
-    height: var(--nav-height);
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
@@ -124,7 +164,7 @@ main {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    height: 100%;
+    flex-wrap: wrap;
 }
 
 .nav-brand h1 {
@@ -145,12 +185,13 @@ main {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.6rem 1.2rem;
-    border-radius: 0.75rem;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
     color: rgba(255, 255, 255, 0.85);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s ease;
     position: relative;
-    border: 1px solid transparent;
+    margin: 0.25rem 0.5rem;
+    overflow: hidden;
 }
 
 .nav-tab:hover {
@@ -238,6 +279,14 @@ main {
     .d-md-block {
         display: none;
     }
+
+    .page-header-with-bg h1 {
+        font-size: x;
+    }
+
+    .page-header-with-bg p {
+        font-size: small;
+    }
 }
 
 
@@ -269,12 +318,11 @@ main {
 .card-title-sm {
     font-size: 0.8rem;
     text-transform: uppercase;
-    color: var(--text-secondary);
 }
 
 .card-metric-lg {
     margin: 0.5rem 0;
-    font-size: 2rem;
+    font-size: 1.8rem;
 }
 
 .card-section-title {
@@ -290,24 +338,37 @@ main {
 
 table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     margin: 1rem 0;
 }
 
 th,
 td {
-    padding: 0.75rem 1rem;
+    padding: 0.7rem 1rem;
     text-align: left;
     border-bottom: 1px solid var(--border-color);
+    font-size: 0.9rem;
 }
 
 th {
-    background-color: rgba(15, 23, 42, 0.5);
-    color: var(--text-secondary);
+    background-color: var(--accent-color);
+    opacity: 0.7;
+    color: var(--text-inverse);
     font-weight: 500;
     text-transform: uppercase;
-    font-size: 0.75rem;
-    letter-spacing: 0.05em;
+    font-size: 1rem;
+    /* letter-spacing: 0.05em; */
+}
+
+th:first-child {
+    border-top-left-radius: 15px;
+    border-bottom-left-radius: 15px;
+}
+
+th:last-child {
+    border-top-right-radius: 15px;
+    border-bottom-right-radius: 15px;
 }
 
 tr:hover {
@@ -322,19 +383,19 @@ tr:hover {
 footer {
     background-color: var(--primary-color);
     border-top: 1px solid var(--border-color);
-    padding: 2rem 0;
+    padding: 0.5rem 0;
     margin-top: auto;
     text-align: center;
-    color: var(--text-secondary);
+    color: var(--text-inverse);
 }
 
 .footer-note {
-    font-size: 0.9rem;
+    font-size: 0.6rem;
     margin-top: 0.5rem;
 }
 
 .footer-team {
-    font-size: 0.8rem;
+    font-size: 0.6rem;
     margin-top: 0.5rem;
     opacity: 0.7;
 }
@@ -389,6 +450,10 @@ footer {
     margin-top: 1.5rem;
 }
 
+.ml-2 {
+    margin-left: 2rem;
+}
+
 .w-full {
     width: 100%;
 }
@@ -411,6 +476,7 @@ footer {
 
 .list-inside {
     list-style-position: inside;
+    font-size: 0.9rem;
 }
 
 .list-none {
@@ -432,12 +498,40 @@ footer {
     gap: 1.5rem;
 }
 
+.grid-3-1 {
+    display: grid;
+    grid-template-columns: 1.8fr 1fr;
+    gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .grid-3-1 {
+        grid-template-columns: 1fr;
+    }
+
+    .grid-2 {
+        grid-template-columns: 1fr;
+    }
+}
+
+.align-self-center {
+    align-self: center;
+}
+
 .d-none {
     display: none;
 }
 
 .d-block {
     display: block;
+}
+
+.img-constrained {
+    max-height: 270px;
+    width: auto;
+    max-width: 100%;
+    display: block;
+    margin: 0 auto;
 }
 
 .d-md-block {
@@ -449,8 +543,7 @@ footer {
 }
 
 .line-relaxed {
-    line-height: 1.8;
-    font-size: 1.1rem;
+    line-height: 1.6;
 }
 
 /* Custom Components */
@@ -474,7 +567,7 @@ footer {
 .form-label {
     display: block;
     margin-bottom: 0.5rem;
-    color: var(--text-secondary);
+    color: var(--primary-color);
     font-size: 0.9rem;
 }
 
@@ -494,8 +587,8 @@ footer {
 }
 
 .status-badge {
-    margin-top: 1.5rem;
-    padding: 0.75rem;
+    margin-top: 0.6rem;
+    padding: 0.3rem;
     text-align: center;
     border-radius: 0.5rem;
     font-weight: 600;
@@ -526,4 +619,107 @@ footer {
     background-color: rgba(239, 68, 68, 0.4) !important;
     color: #fff !important;
     border-color: var(--danger-color) !important;
+}
+
+/* Team Section */
+.team-section {
+    margin: 4rem 0;
+}
+
+.team-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.team-card {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    box-shadow: var(--shadow);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid var(--border-color);
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    color: var(--text-primary);
+}
+
+.team-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.team-avatar {
+    width: 80px;
+    height: 80px;
+    background: #e2e8f0;
+    color: #64748b;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin: 0 auto 1rem;
+    border: 3px solid white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.team-card h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.3rem;
+    color: var(--primary-color);
+}
+
+.team-role {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.team-link {
+    cursor: pointer;
+}
+
+.external-link-icon {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    color: var(--primary-color);
+    font-size: 0.9rem;
+    opacity: 0.6;
+}
+
+.team-card:hover .external-link-icon {
+    opacity: 1;
+}
+
+/* Section Titles */
+.section-title {
+    text-align: left;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border-color);
+    /* Subtle full width line */
+    position: relative;
+}
+
+.section-title::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    /* Overlap the border */
+    left: 0;
+    width: 60px;
+    /* Accent tick */
+    height: 2px;
+    background-color: var(--accent-color);
 }

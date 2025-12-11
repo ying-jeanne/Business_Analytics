@@ -8,13 +8,13 @@
 {% endblock %}
 
 {% block content %}
-<div class="header-section mb-4">
+<div class="header-section mb-4 text-center">
     <h2>Live Risk Assessment</h2>
-    <p class="text-muted">Interactive tool to evaluate individual customer risk using the production LightGBM model.</p>
+    <p>Interactive tool to evaluate individual customer risk using the production LightGBM model.</p>
 </div>
 
 <!-- Summary Statistics Card (Optional, or keep compact) -->
-<div class="card">
+<div class="card" id="result-area">
     <h3 class="mb-4"><i class="fas fa-search-dollar"></i> Customer Filtering</h3>
     <div class="grid-2">
         <div class="form-group">
@@ -46,10 +46,14 @@
             </select>
         </div>
     </div>
-</div>
+    <div class="card">
+        <h4 class="mb-4"> <i class="fas fa-chart-line"></i> Impact Waterfall Analysis</h4>
+        <div id="loading" class="text-center p-4" style="display: none;">
+            <i class="fas fa-circle-notch fa-spin fa-2x text-accent"></i>
+        </div>
+        <div id="shap-plot" style="min-height: 500px;"></div>
+    </div>
 
-<div id="result-area" class="result-area">
-    <!-- Two Column: Stats & Guide -->
     <div class="grid-2">
         <div class="card">
             <h4 class="card-section-title">📊 Prediction Details</h4>
@@ -82,15 +86,6 @@
                 </li>
             </ul>
         </div>
-    </div>
-
-    <!-- Full Width SHAP Plot -->
-    <div class="card">
-        <h4 class="mb-4">📈 Impact Waterfall Analysis</h4>
-        <div id="loading" class="text-center p-4" style="display: none;">
-            <i class="fas fa-circle-notch fa-spin fa-2x text-accent"></i>
-        </div>
-        <div id="shap-plot" style="min-height: 500px;"></div>
     </div>
 </div>
 {% endblock %}
