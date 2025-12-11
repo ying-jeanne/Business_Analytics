@@ -495,7 +495,7 @@ footer {
 .grid-2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
+    gap: 1rem;
 }
 
 .grid-3-1 {

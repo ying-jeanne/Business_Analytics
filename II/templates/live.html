@@ -51,7 +51,9 @@
         <div id="loading" class="text-center p-4" style="display: none;">
             <i class="fas fa-circle-notch fa-spin fa-2x text-accent"></i>
         </div>
-        <div id="shap-plot" style="min-height: 500px;"></div>
+        <div style="overflow-x: auto;">
+            <div id="shap-plot" style="min-height: 400px; min-width: 600px;"></div>
+        </div>
     </div>
 
     <div class="grid-2">
@@ -173,7 +175,7 @@
                     textfont: {
                         family: 'Inter, sans-serif',
                         size: 12,
-                        color: '#94a3b8' // text-secondary
+                        color: '#1e293b' // text-primary
                     },
                     connector: {
                         line: {
@@ -207,21 +209,21 @@
                     showlegend: false,
                     xaxis: {
                         title: 'Impact on Log-Odds Score',
-                        gridcolor: 'rgba(255,255,255,0.1)',
-                        zerolinecolor: 'rgba(255,255,255,0.2)',
-                        tickfont: { color: '#94a3b8' },
-                        titlefont: { color: '#94a3b8' }
+                        gridcolor: 'rgba(0,0,0,0.1)',
+                        zerolinecolor: 'rgba(0,0,0,0.2)',
+                        tickfont: { color: '#1e293b' },
+                        titlefont: { color: '#1e293b' }
                     },
                     yaxis: {
                         automargin: true,
-                        tickfont: { color: '#f8fafc', size: 12 }, // Primary text color
+                        tickfont: { color: '#1e293b', size: 12 }, // Changed to dark grey
                         dtick: 1
                     },
-                    margin: { t: 30, l: 150, r: 50, b: 50 },
-                    height: 500
+                    margin: { t: 30, l: 200, r: 50, b: 50 },
+                    height: 400
                 };
 
-                const config = { resposive: true, displayModeBar: false };
+                const config = { responsive: true, displayModeBar: false };
 
                 Plotly.newPlot('shap-plot', [trace], layout, config);
             })
