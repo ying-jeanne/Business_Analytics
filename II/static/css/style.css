@@ -599,25 +599,25 @@ footer {
 
 .status-tp {
     background-color: rgba(239, 68, 68, 0.2) !important;
-    color: #fca5a5 !important;
+    color: #f11414 !important;
     border-color: var(--danger-color) !important;
 }
 
 .status-tn {
     background-color: rgba(16, 185, 129, 0.2) !important;
-    color: #6ee7b7 !important;
+    color: #16a36b !important;
     border-color: var(--success-color) !important;
 }
 
 .status-fp {
     background-color: rgba(245, 158, 11, 0.2) !important;
-    color: #fcd34d !important;
+    color: #f6c72c !important;
     border-color: var(--warning-color) !important;
 }
 
 .status-fn {
     background-color: rgba(239, 68, 68, 0.4) !important;
-    color: #fff !important;
+    color: #f11414 !important;
     border-color: var(--danger-color) !important;
 }
 
