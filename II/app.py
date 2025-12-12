@@ -1,56 +1,71 @@
 import pandas as pd
 import numpy as np
-from flask import Flask, render_template, jsonify, request, redirect, url_for
+from flask import Flask, render_template, jsonify, request
 import os
 import pathlib
 
+# ============================================================================
+# Configuration
+# ============================================================================
 app = Flask(__name__)
+PREDICTION_THRESHOLD = 0.13
 
+# ============================================================================
+# Data Loading
+# ============================================================================
 def load_data(data_file=None):
+    """Loads the dataset from the data directory."""
     if data_file is None:
-        # Use absolute path relative to this file to ensure it works regardless of cwd
+        # Use absolute path relative to this file
         base_dir = pathlib.Path(__file__).parent
         data_file = base_dir / 'data' / 'webapp_data.csv'
     
     if os.path.exists(data_file):
-        df = pd.read_csv(data_file)
-        df['ID'] = df['ID'].astype(int)
-        print(f"Loaded {len(df)} records from {data_file}")
-        return df
+        try:
+            df = pd.read_csv(data_file)
+            df['ID'] = df['ID'].astype(int)
+            print(f"Loaded {len(df)} records from {data_file}")
+            return df
+        except Exception as e:
+            print(f"Error loading data: {e}")
+            return None
     else:
         print(f"Warning: {data_file} not found. Please run the data generation script.")
         return None
 
 df = load_data()
 
+# ============================================================================
+# Routes
+# ============================================================================
 @app.route('/')
 def home():
-    """Landing Page."""
+    """Renders the landing page."""
     return render_template('home.html')
 
 @app.route('/data')
 def data():
+    """Renders the data overview page."""
     return render_template('data.html')
 
 @app.route('/analysis')
 def analysis():
-    """Page 2: Analysis (Results + Architecture)."""
+    """Renders the analysis page (Results + Architecture)."""
     return render_template('results.html')
 
 @app.route('/live')
 def live():
-    """Page 4: Live Risk Assessment (Old Index)."""
+    """Renders the interactive risk assessment tool."""
     if df is None:
         return "Error: webapp_data.csv not found. Please generate it first."
     
     # Get filter parameter from query string
     filter_type = request.args.get('filter', 'riskiest')
-    threshold = 0.13
     
     # Create a list of customers for the dropdown
     customers = []
     for idx, row in df.iterrows():
-        pred = 1 if row['Prediction_Score'] >= threshold else 0
+        pred = 1 if row['Prediction_Score'] >= PREDICTION_THRESHOLD else 0
         true = int(row['True_Label'])
         
         # Determine status
@@ -67,14 +82,8 @@ def live():
         })
     
     # Filter based on selection
-    if filter_type == 'TP':
-        customers = [c for c in customers if c['status'] == 'TP']
-    elif filter_type == 'TN':
-        customers = [c for c in customers if c['status'] == 'TN']
-    elif filter_type == 'FP':
-        customers = [c for c in customers if c['status'] == 'FP']
-    elif filter_type == 'FN':
-        customers = [c for c in customers if c['status'] == 'FN']
+    if filter_type in ['TP', 'TN', 'FP', 'FN']:
+        customers = [c for c in customers if c['status'] == filter_type]
     elif filter_type == 'riskiest':
         # Sort by score descending (riskiest first)
         customers.sort(key=lambda x: x['score'], reverse=True)
@@ -89,6 +98,7 @@ def live():
 
 @app.route('/details/<int:customer_id>')
 def get_details(customer_id):
+    """Returns JSON details for a specific customer ID."""
     if df is None: 
         return jsonify({'error': 'Data not loaded'})
     
@@ -98,11 +108,10 @@ def get_details(customer_id):
     
     row = customer.iloc[0]
     
-    # Determine Status (TP, TN, FP, FN)
-    threshold = 0.13
-    pred = 1 if row['Prediction_Score'] >= threshold else 0
+    pred = 1 if row['Prediction_Score'] >= PREDICTION_THRESHOLD else 0
     true = int(row['True_Label'])
     
+    # Determine detailed status message
     if true == 1 and pred == 1: status = "True Positive (Correct Default)"
     elif true == 0 and pred == 0: status = "True Negative (Correct Non-Default)"
     elif true == 0 and pred == 1: status = "False Positive (False Alarm)"
@@ -113,11 +122,12 @@ def get_details(customer_id):
         'true_label': int(true),
         'prediction_score': float(row['Prediction_Score']),
         'status': status,
-        'threshold': float(threshold)
+        'threshold': float(PREDICTION_THRESHOLD)
     })
 
 @app.route('/plot/<int:customer_id>')
 def get_plot(customer_id):
+    """Returns JSON data for the SHAP waterfall plot."""
     if df is None: 
         return jsonify({'error': 'Data not loaded'})
         
@@ -135,8 +145,7 @@ def get_plot(customer_id):
     feature_values = row[feature_cols].values
     base_value = row['Base_Value']
     
-    # Create data for waterfall chart
-    # Sort by absolute SHAP value and take top 10
+    # Create data for waterfall chart (Top 10 features)
     indices = np.argsort(np.abs(shap_values))[::-1][:10]
     
     top_features = [feature_cols[i] for i in indices]
@@ -150,11 +159,12 @@ def get_plot(customer_id):
     
     cumulative = base_value
     for feat, shap_val, feat_val in zip(top_features, top_shap_values, top_feature_values):
-        # Format feature value as int if it's a whole number, otherwise as float
+        # Format feature value cleanly (int if practically int, else float)
         if isinstance(feat_val, (int, np.integer)) or (isinstance(feat_val, (float, np.floating)) and feat_val == int(feat_val)):
             feat_val_str = f'{int(feat_val)}'
         else:
             feat_val_str = f'{float(feat_val):.2f}'
+            
         labels.append(f'{feat}={feat_val_str}')
         values.append(shap_val)
         cumulative += shap_val
