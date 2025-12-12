@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, send_from_directory
 import os
 import pathlib
 
@@ -181,6 +181,20 @@ def get_plot(customer_id):
         'base_value': float(base_value),
         'final_value': float(cumulative)
     })
+
+@app.route('/robots.txt')
+def robots():
+    """Serves the robots.txt file."""
+    return send_from_directory(app.static_folder, 'robots.txt')
+
+@app.route('/sitemap.xml')
+def sitemap():
+    """Serves the sitemap.xml file."""
+    return send_from_directory(app.static_folder, 'sitemap.xml')
+
+@app.route('/googlecd1cc85790141e53.html')
+def google_verification():
+    return "google-site-verification: googlecd1cc85790141e53.html"
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

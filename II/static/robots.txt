@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://dba5106.pythonanywhere.com/sitemap.xml
