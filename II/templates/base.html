@@ -20,6 +20,40 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Canonical Tag -->
+    <link rel="canonical" href="{{ request.url }}" />
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "LendRight",
+      "url": "https://dba5106.pythonanywhere.com/",
+      "description": "LendRight: An Explainable AI Credit Scoring Dashboard using LightGBM and SHAP.",
+      "author": [
+        {
+          "@type": "Person",
+          "name": "Zhou Zihan",
+          "url": "https://www.linkedin.com/in/zhou-zihan/"
+        },
+        {
+          "@type": "Person",
+          "name": "Zhao Qiya",
+          "url": "https://www.linkedin.com/in/qiya-zhao-493632377/"
+        },
+        {
+          "@type": "Person",
+          "name": "Ying-Jeanne Wang",
+          "url": "https://ying-jeanne.github.io/"
+        }
+      ],
+      "creator": {
+        "@type": "Organization",
+        "name": "NUS MSBA Group"
+      }
+    }
+    </script>
     {% block extra_head %}{% endblock %}
 </head>
 
